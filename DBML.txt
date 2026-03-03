@@ -1,0 +1,150 @@
+Table users {
+  id uuid [pk]
+  name varchar(100) [not null]
+  email varchar(150) [unique, not null]
+  password_hash text [not null]
+  role varchar(20) [note: "DONOR | RECIPIENT | ADMIN"]
+  phone varchar(20)
+  is_verified boolean [default: false]
+  trust_score float [default: 0.5]
+  created_at timestamp [default: `now()`]
+}
+
+Table organizations {
+  id uuid [pk]
+  name varchar(150) [not null]
+  type varchar(30) [note: "RESTAURANT | NGO | INSTITUTION"]
+  address text
+  latitude float
+  longitude float
+  max_capacity_kg float
+  created_at timestamp [default: `now()`]
+}
+
+Table user_organization_map {
+  user_id uuid
+  organization_id uuid
+
+  indexes {
+    (user_id, organization_id) [pk]
+  }
+}
+
+Table donations {
+  id uuid [pk]
+  donor_id uuid [not null]
+  organization_id uuid [not null]
+  food_category varchar(100)
+  quantity_kg float
+  estimated_meals int
+  prepared_at timestamp
+  expiry_time timestamp
+  pickup_deadline timestamp
+  latitude float
+  longitude float
+  status varchar(30) [note: "REPORTED | MATCHED | ACCEPTED | PICKED_UP | DELIVERED | EXPIRED | CANCELLED"]
+  created_at timestamp [default: `now()`]
+}
+
+Table donation_images {
+  id uuid [pk]
+  donation_id uuid
+  image_url text
+}
+
+Table matches {
+  id uuid [pk]
+  donation_id uuid
+  recipient_id uuid
+  predicted_success_probability float
+  distance_km float
+  urgency_score float
+  capacity_fit_score float
+  trust_score_used float
+  model_version varchar(50)
+  selected boolean [default: false]
+  created_at timestamp [default: `now()`]
+}
+
+Table deliveries {
+  id uuid [pk]
+  donation_id uuid
+  recipient_id uuid
+  pickup_time timestamp
+  delivery_time timestamp
+  delay_minutes int
+  status varchar(30)
+  completed boolean [default: false]
+}
+
+Table status_logs {
+  id uuid [pk]
+  donation_id uuid
+  old_status varchar(30)
+  new_status varchar(30)
+  changed_by uuid
+  changed_at timestamp [default: `now()`]
+}
+
+Table ratings {
+  id uuid [pk]
+  donation_id uuid
+  from_user uuid
+  to_user uuid
+  rating int
+  feedback text
+  created_at timestamp [default: `now()`]
+}
+
+Table trust_metrics {
+  user_id uuid [pk]
+  completion_rate float
+  avg_rating float
+  cancellation_rate float
+  avg_response_time_minutes float
+  last_updated timestamp [default: `now()`]
+}
+
+Table impact_metrics {
+  id uuid [pk]
+  total_kg_saved float
+  total_meals_served int
+  total_co2_reduced float
+  total_donations int
+  total_successful_deliveries int
+  last_updated timestamp [default: `now()`]
+}
+
+Table daily_impact {
+  date date [pk]
+  kg_saved float
+  meals_served int
+  co2_reduced float
+}
+
+/* =========================
+   RELATIONSHIPS
+   ========================= */
+
+Ref: user_organization_map.user_id > users.id
+Ref: user_organization_map.organization_id > organizations.id
+
+Ref: donations.donor_id > users.id
+Ref: donations.organization_id > organizations.id
+
+Ref: donation_images.donation_id > donations.id
+
+Ref: matches.donation_id > donations.id
+Ref: matches.recipient_id > users.id
+
+Ref: deliveries.donation_id > donations.id
+Ref: deliveries.recipient_id > users.id
+
+Ref: status_logs.donation_id > donations.id
+Ref: status_logs.changed_by > users.id
+
+Ref: ratings.donation_id > donations.id
+Ref: ratings.from_user > users.id
+Ref: ratings.to_user > users.id
+
+Ref: trust_metrics.user_id > users.id

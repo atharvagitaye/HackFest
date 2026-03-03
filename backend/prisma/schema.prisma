@@ -1,0 +1,199 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String   @id @default(uuid())
+  name           String   @db.VarChar(100)
+  email          String   @unique @db.VarChar(150)
+  passwordHash   String   @map("password_hash")
+  role           String   @db.VarChar(20) // DONOR | RECIPIENT | ADMIN
+  phone          String?  @db.VarChar(20)
+  isVerified     Boolean  @default(false) @map("is_verified")
+  trustScore     Float    @default(0.5) @map("trust_score")
+  organizationId String?  @unique @map("organization_id")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  organization    Organization?          @relation(fields: [organizationId], references: [id])
+  donations       Donation[]             @relation("DonorDonations")
+  matches         Match[]                @relation("RecipientMatches")
+  deliveries      Delivery[]             @relation("RecipientDeliveries")
+  statusLogs      StatusLog[]            @relation("StatusLogChanger")
+  ratingsGiven    Rating[]               @relation("RatingsGiven")
+  ratingsReceived Rating[]               @relation("RatingsReceived")
+  trustMetrics    TrustMetric?
+
+  @@index([email])
+  @@index([role])
+  @@map("users")
+}
+
+model Organization {
+  id            String   @id @default(uuid())
+  name          String   @db.VarChar(150)
+  type          String   @db.VarChar(30) // RESTAURANT | NGO | INSTITUTION
+  address       String?
+  latitude      Float?
+  longitude     Float?
+  maxCapacityKg Float?   @map("max_capacity_kg")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  user      User?
+  donations Donation[]
+
+  @@map("organizations")
+}
+
+model Donation {
+  id             String    @id @default(uuid())
+  donorId        String    @map("donor_id")
+  organizationId String    @map("organization_id")
+  foodCategory   String?   @map("food_category") @db.VarChar(100)
+  quantityKg     Float?    @map("quantity_kg")
+  estimatedMeals Int?      @map("estimated_meals")
+  preparedAt     DateTime? @map("prepared_at")
+  expiryTime     DateTime? @map("expiry_time")
+  pickupDeadline DateTime? @map("pickup_deadline")
+  latitude       Float?
+  longitude      Float?
+  status         String    @default("REPORTED") @db.VarChar(30)
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  donor        User          @relation("DonorDonations", fields: [donorId], references: [id])
+  organization Organization  @relation(fields: [organizationId], references: [id])
+  images       DonationImage[]
+  matches      Match[]
+  deliveries   Delivery[]
+  statusLogs   StatusLog[]
+  ratings      Rating[]
+
+  @@index([donorId])
+  @@index([status])
+  @@index([organizationId])
+  @@map("donations")
+}
+
+model DonationImage {
+  id         String  @id @default(uuid())
+  donationId String  @map("donation_id")
+  imageUrl   String? @map("image_url")
+
+  donation Donation @relation(fields: [donationId], references: [id], onDelete: Cascade)
+
+  @@index([donationId])
+  @@map("donation_images")
+}
+
+model Match {
+  id                          String   @id @default(uuid())
+  donationId                  String   @map("donation_id")
+  recipientId                 String   @map("recipient_id")
+  predictedSuccessProbability Float?   @map("predicted_success_probability")
+  distanceKm                  Float?   @map("distance_km")
+  urgencyScore                Float?   @map("urgency_score")
+  capacityFitScore            Float?   @map("capacity_fit_score")
+  trustScoreUsed              Float?   @map("trust_score_used")
+  modelVersion                String?  @map("model_version") @db.VarChar(50)
+  selected                    Boolean  @default(false)
+  createdAt                   DateTime @default(now()) @map("created_at")
+
+  donation  Donation @relation(fields: [donationId], references: [id], onDelete: Cascade)
+  recipient User     @relation("RecipientMatches", fields: [recipientId], references: [id])
+
+  @@index([donationId])
+  @@index([recipientId])
+  @@map("matches")
+}
+
+model Delivery {
+  id           String    @id @default(uuid())
+  donationId   String    @map("donation_id")
+  recipientId  String    @map("recipient_id")
+  pickupTime   DateTime? @map("pickup_time")
+  deliveryTime DateTime? @map("delivery_time")
+  delayMinutes Int?      @map("delay_minutes")
+  status       String?   @db.VarChar(30)
+  completed    Boolean   @default(false)
+
+  donation  Donation @relation(fields: [donationId], references: [id], onDelete: Cascade)
+  recipient User     @relation("RecipientDeliveries", fields: [recipientId], references: [id])
+
+  @@index([donationId])
+  @@index([recipientId])
+  @@map("deliveries")
+}
+
+model StatusLog {
+  id         String   @id @default(uuid())
+  donationId String   @map("donation_id")
+  oldStatus  String?  @map("old_status") @db.VarChar(30)
+  newStatus  String?  @map("new_status") @db.VarChar(30)
+  changedBy  String   @map("changed_by")
+  changedAt  DateTime @default(now()) @map("changed_at")
+
+  donation Donation @relation(fields: [donationId], references: [id], onDelete: Cascade)
+  changer  User     @relation("StatusLogChanger", fields: [changedBy], references: [id])
+
+  @@index([donationId])
+  @@map("status_logs")
+}
+
+model Rating {
+  id         String   @id @default(uuid())
+  donationId String   @map("donation_id")
+  fromUser   String   @map("from_user")
+  toUser     String   @map("to_user")
+  rating     Int?
+  feedback   String?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  donation Donation @relation(fields: [donationId], references: [id], onDelete: Cascade)
+  from     User     @relation("RatingsGiven", fields: [fromUser], references: [id])
+  to       User     @relation("RatingsReceived", fields: [toUser], references: [id])
+
+  @@index([donationId])
+  @@index([toUser])
+  @@map("ratings")
+}
+
+model TrustMetric {
+  userId                String   @id @map("user_id")
+  completionRate        Float?   @map("completion_rate")
+  avgRating             Float?   @map("avg_rating")
+  cancellationRate      Float?   @map("cancellation_rate")
+  avgResponseTimeMinutes Float?  @map("avg_response_time_minutes")
+  lastUpdated           DateTime @default(now()) @map("last_updated")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("trust_metrics")
+}
+
+model ImpactMetric {
+  id                        String   @id @default(uuid())
+  totalKgSaved              Float?   @map("total_kg_saved")
+  totalMealsServed          Int?     @map("total_meals_served")
+  totalCo2Reduced           Float?   @map("total_co2_reduced")
+  totalDonations            Int?     @map("total_donations")
+  totalSuccessfulDeliveries Int?     @map("total_successful_deliveries")
+  lastUpdated               DateTime @default(now()) @map("last_updated")
+
+  @@map("impact_metrics")
+}
+
+model DailyImpact {
+  date        DateTime @id
+  kgSaved     Float?   @map("kg_saved")
+  mealsServed Int?     @map("meals_served")
+  co2Reduced  Float?   @map("co2_reduced")
+
+  @@map("daily_impact")
+}
