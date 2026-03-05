@@ -79,12 +79,12 @@ const DonationWizard = () => {
   const createMutation = useMutation({
     mutationFn: () =>
       donationsApi.create({
-        organizationId: user?.organizationId ?? "",
+        organizationId: user?.organizationId || undefined,
         foodCategory: itemName || foodCategory,
         quantityKg: quantityKg ? parseFloat(quantityKg) : undefined,
         estimatedMeals: estimatedMeals ? parseInt(estimatedMeals) : undefined,
-        expiryTime: expiryTime || undefined,
-        pickupDeadline: pickupDeadline || undefined,
+        expiryTime: expiryTime ? new Date(expiryTime).toISOString() : undefined,
+        pickupDeadline: pickupDeadline ? new Date(pickupDeadline).toISOString() : undefined,
         preparedAt: new Date().toISOString(),
         latitude: latitude ? parseFloat(latitude) : undefined,
         longitude: longitude ? parseFloat(longitude) : undefined,

@@ -70,6 +70,7 @@ After running `npm run db:seed`, the following test accounts are available (all 
 |-------|--------------|------|
 | `donor@greenleaf.com` | Green Leaf Restaurant | DONOR |
 | `donor@citycatering.com` | City Catering Co. | DONOR |
+| `donor@urbanbistro.com` | The Urban Bistro | DONOR |
 
 ### Recipients
 
@@ -77,6 +78,7 @@ After running `npm run db:seed`, the following test accounts are available (all 
 |-------|--------------|------|
 | `recipient@hopeshelter.org` | Hope Shelter NGO | RECIPIENT |
 | `recipient@foodbank.org` | Community Food Bank | RECIPIENT |
+| `recipient@riverside.org` | Riverside Community Centre | RECIPIENT |
 
 Each user is associated with a mock organization linked via `organizationId`.
 
@@ -147,16 +149,19 @@ backend/
 | POST | `/api/v1/auth/register` | ❌ | — | Register user |
 | POST | `/api/v1/auth/login` | ❌ | — | Login |
 | GET | `/api/v1/auth/me` | ✅ | Any | Current user profile |
+| GET | `/api/v1/auth/trust` | ✅ | Any | Trust metrics for current user |
 | POST | `/api/v1/donations` | ✅ | DONOR | Create donation |
 | GET | `/api/v1/donations` | ✅ | Any | List donations |
 | GET | `/api/v1/donations/:id` | ✅ | Any | Get donation |
 | PATCH | `/api/v1/donations/:id/status` | ✅ | Any | Update status |
 | GET | `/api/v1/donations/:id/nearby-recipients` | ✅ | Any | Geospatial recipients |
+| GET | `/api/v1/matches/my` | ✅ | RECIPIENT | My matched donations |
 | POST | `/api/v1/matches/generate/:donationId` | ✅ | DONOR/ADMIN | Run matching |
 | GET | `/api/v1/matches/:donationId` | ✅ | Any | Get matches |
 | POST | `/api/v1/deliveries/start` | ✅ | RECIPIENT | Start delivery |
 | POST | `/api/v1/deliveries/complete` | ✅ | RECIPIENT | Complete delivery |
 | GET | `/api/v1/impact/summary` | ✅ | Any | Impact dashboard |
+| GET | `/api/v1/impact/daily` | ✅ | Any | Daily impact trend (last N days) |
 
 ---
 

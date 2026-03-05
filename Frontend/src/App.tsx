@@ -17,6 +17,7 @@ import DonationReview from "./pages/DonationReview";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import AdminDashboard from "./pages/AdminDashboard";
+import RecipientMatches from "./pages/RecipientMatches";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -53,6 +54,7 @@ const App = () => (
           <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
           <Route path="/donations" element={<ProtectedRoute><DonationsFeed /></ProtectedRoute>} />
           <Route path="/matches" element={<ProtectedRoute><AIMatching /></ProtectedRoute>} />
+          <Route path="/my-matches" element={<ProtectedRoute><RecipientMatches /></ProtectedRoute>} />
           <Route path="/live-map" element={<ProtectedRoute><LiveMap /></ProtectedRoute>} />
           <Route path="/delivery" element={<ProtectedRoute><DeliveryTracking /></ProtectedRoute>} />
           <Route path="/delivery/:id" element={<ProtectedRoute><DeliveryTracking /></ProtectedRoute>} />

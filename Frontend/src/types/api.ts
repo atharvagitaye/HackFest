@@ -63,10 +63,11 @@ export interface Donation {
   createdAt: string;
   donor?: { id: string; name: string; trustScore: number };
   organization?: Organization;
+  images?: { id: string; imageUrl: string }[];
 }
 
 export interface CreateDonationPayload {
-  organizationId: string;
+  organizationId?: string;
   foodCategory?: string;
   quantityKg?: number;
   estimatedMeals?: number;
@@ -91,6 +92,11 @@ export interface Match {
   selected: boolean;
   createdAt: string;
   recipient?: { id: string; name: string; email: string; trustScore: number };
+  donation?: Donation & {
+    donor?: { id: string; name: string };
+    organization?: Organization;
+    images?: { id: string; imageUrl: string }[];
+  };
 }
 
 // ─── Deliveries ───────────────────────────────────────────────────────────────

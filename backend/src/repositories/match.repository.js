@@ -22,4 +22,19 @@ const findById = (id) =>
 const markSelected = (id) =>
   prisma.match.update({ where: { id }, data: { selected: true } });
 
-module.exports = { createMany, findByDonation, findById, markSelected };
+const findByRecipient = (recipientId) =>
+  prisma.match.findMany({
+    where: { recipientId },
+    include: {
+      donation: {
+        include: {
+          organization: true,
+          donor: { select: { id: true, name: true } },
+          images: true,
+        },
+      },
+    },
+    orderBy: { createdAt: 'desc' },
+  });
+
+module.exports = { createMany, findByDonation, findById, markSelected, findByRecipient };

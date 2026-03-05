@@ -7,13 +7,13 @@ const validate = require('../middlewares/validate');
 const router = Router();
 
 const createDonationSchema = z.object({
-  organizationId: z.string().uuid(),
+  organizationId: z.string().uuid().optional(),
   foodCategory: z.string().max(100).optional(),
   quantityKg: z.number().positive().optional(),
   estimatedMeals: z.number().int().positive().optional(),
-  preparedAt: z.string().datetime().optional(),
-  expiryTime: z.string().datetime().optional(),
-  pickupDeadline: z.string().datetime().optional(),
+  preparedAt: z.string().optional(),
+  expiryTime: z.string().optional(),
+  pickupDeadline: z.string().optional(),
   latitude: z.number().optional(),
   longitude: z.number().optional(),
 });

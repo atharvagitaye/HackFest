@@ -82,6 +82,8 @@ const generateMatches = async (donationId) => {
 
 const getMatchesForDonation = (donationId) => matchRepo.findByDonation(donationId);
 
+const getMyMatches = (recipientId) => matchRepo.findByRecipient(recipientId);
+
 /**
  * Recipient accepts a match → marks match selected + advances donation to ACCEPTED.
  */
@@ -121,4 +123,4 @@ const rejectMatch = async (matchId, recipientId) => {
   return updated;
 };
 
-module.exports = { generateMatches, getMatchesForDonation, acceptMatch, rejectMatch };
+module.exports = { generateMatches, getMatchesForDonation, acceptMatch, rejectMatch, getMyMatches };

@@ -10,7 +10,7 @@ const create = (data) =>
 const findAll = (filters = {}) =>
   prisma.donation.findMany({
     where: filters,
-    include: { donor: { select: { id: true, name: true, trustScore: true } }, organization: true },
+    include: { donor: { select: { id: true, name: true, trustScore: true } }, organization: true, images: true },
     orderBy: { createdAt: 'desc' },
   });
 

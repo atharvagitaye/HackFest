@@ -5,10 +5,10 @@ import { toast } from "sonner";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import StatusBadge from "@/components/shared/StatusBadge";
-import { donationsApi } from "@/lib/api";
-import { Donation } from "@/types/api";
+import { donationsApi, matchesApi, deliveriesApi } from "@/lib/api";
+import { Donation, Match } from "@/types/api";
 import { Button } from "@/components/ui/button";
-import { Plus, Package, MapPin, X } from "lucide-react";
+import { Plus, Package, MapPin, X, Check, Truck, ClipboardList } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
 import foodBakery from "@/assets/food-bakery.jpg";
@@ -63,6 +63,54 @@ const DonationsFeed = () => {
     onError: (err: Error) => toast.error(err.message ?? "Failed to cancel"),
   });
 
+  // ── Recipient: fetch my matches ──────────────────────────────────────────
+  const { data: myMatches = [] } = useQuery<Match[]>({
+    queryKey: ["my-matches"],
+    queryFn: () => matchesApi.getMyMatches(),
+    enabled: user?.role === "RECIPIENT",
+  });
+
+  const acceptMatchMutation = useMutation({
+    mutationFn: (matchId: string) => matchesApi.accept(matchId),
+    onSuccess: () => {
+      toast.success("Match accepted! Head over to pick it up.");
+      queryClient.invalidateQueries({ queryKey: ["my-matches"] });
+      queryClient.invalidateQueries({ queryKey: ["donations"] });
+    },
+    onError: (err: Error) => toast.error(err.message ?? "Failed to accept match"),
+  });
+
+  const rejectMatchMutation = useMutation({
+    mutationFn: (matchId: string) => matchesApi.reject(matchId),
+    onSuccess: () => {
+      toast.info("Match rejected.");
+      queryClient.invalidateQueries({ queryKey: ["my-matches"] });
+    },
+    onError: (err: Error) => toast.error(err.message ?? "Failed to reject match"),
+  });
+
+  const startPickupMutation = useMutation({
+    mutationFn: (donationId: string) => deliveriesApi.start(donationId),
+    onSuccess: (delivery) => {
+      toast.success("Pickup started! Track your delivery.");
+      queryClient.invalidateQueries({ queryKey: ["my-matches"] });
+      queryClient.invalidateQueries({ queryKey: ["donations"] });
+      navigate(`/delivery/${delivery.id}`);
+    },
+    onError: (err: Error) => toast.error(err.message ?? "Failed to start pickup"),
+  });
+
+  // Segregate matches by action needed
+  const pendingMatches = myMatches.filter(
+    (m) => m.donation?.status === "MATCHED"
+  );
+  const acceptedDonations = myMatches.filter(
+    (m) => m.selected && m.donation?.status === "ACCEPTED"
+  );
+  const inTransitDonations = myMatches.filter(
+    (m) => m.selected && m.donation?.status === "PICKED_UP"
+  );
+
   const donations: Donation[] = donationsData ?? [];
 
   const filtered = activeCategory === "All Items"
@@ -77,6 +125,122 @@ const DonationsFeed = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
       <main className="container py-8">
+
+        {/* ── NGO / Recipient Task Panel ────────────────────────────────── */}
+        {user?.role === "RECIPIENT" && (pendingMatches.length > 0 || acceptedDonations.length > 0 || inTransitDonations.length > 0) && (
+          <div className="mb-8 card-elevated p-5 border border-primary/20">
+            <h2 className="text-lg font-bold text-foreground flex items-center gap-2 mb-4">
+              <ClipboardList className="w-5 h-5 text-primary" />
+              Your Action Items
+            </h2>
+
+            {/* Pending — waiting for accept/reject */}
+            {pendingMatches.length > 0 && (
+              <div className="mb-4">
+                <p className="text-xs font-semibold uppercase text-muted-foreground mb-2">Matched — Awaiting Your Response</p>
+                <div className="space-y-3">
+                  {pendingMatches.map((m) => (
+                    <div key={m.id} className="flex items-center justify-between gap-4 bg-muted/50 rounded-xl p-4">
+                      <div>
+                        <p className="font-semibold text-foreground capitalize">
+                          {m.donation?.foodCategory ?? "Food Item"}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {m.donation?.organization?.name ?? m.donation?.donor?.name ?? "Unknown donor"} ·{" "}
+                          {m.distanceKm != null ? `${m.distanceKm.toFixed(1)} km away` : ""}
+                        </p>
+                        {m.donation?.quantityKg != null && (
+                          <p className="text-xs text-muted-foreground">{m.donation.quantityKg} kg</p>
+                        )}
+                      </div>
+                      <div className="flex gap-2 shrink-0">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-destructive border-destructive/40 hover:bg-destructive/10"
+                          disabled={rejectMatchMutation.isPending}
+                          onClick={() => rejectMatchMutation.mutate(m.id)}
+                        >
+                          <X className="w-3 h-3 mr-1" />Reject
+                        </Button>
+                        <Button
+                          size="sm"
+                          disabled={acceptMatchMutation.isPending}
+                          onClick={() => acceptMatchMutation.mutate(m.id)}
+                        >
+                          <Check className="w-3 h-3 mr-1" />Accept
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Accepted — ready for pickup */}
+            {acceptedDonations.length > 0 && (
+              <div className="mb-4">
+                <p className="text-xs font-semibold uppercase text-muted-foreground mb-2">Accepted — Ready for Pickup</p>
+                <div className="space-y-3">
+                  {acceptedDonations.map((m) => (
+                    <div key={m.id} className="flex items-center justify-between gap-4 bg-muted/50 rounded-xl p-4">
+                      <div>
+                        <p className="font-semibold text-foreground capitalize">
+                          {m.donation?.foodCategory ?? "Food Item"}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {m.donation?.organization?.name ?? m.donation?.donor?.name ?? "Unknown donor"} ·{" "}
+                          {m.distanceKm != null ? `${m.distanceKm.toFixed(1)} km away` : ""}
+                        </p>
+                        {m.donation?.pickupDeadline && (
+                          <p className="text-xs text-amber-500 mt-0.5">
+                            Pickup by: {new Date(m.donation.pickupDeadline).toLocaleString()}
+                          </p>
+                        )}
+                      </div>
+                      <Button
+                        size="sm"
+                        disabled={startPickupMutation.isPending}
+                        onClick={() => m.donation && startPickupMutation.mutate(m.donation.id)}
+                      >
+                        <Truck className="w-3 h-3 mr-1" />Mark Picked Up
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* In-transit — already picked up */}
+            {inTransitDonations.length > 0 && (
+              <div>
+                <p className="text-xs font-semibold uppercase text-muted-foreground mb-2">In Transit — Mark as Delivered</p>
+                <div className="space-y-3">
+                  {inTransitDonations.map((m) => (
+                    <div key={m.id} className="flex items-center justify-between gap-4 bg-muted/50 rounded-xl p-4">
+                      <div>
+                        <p className="font-semibold text-foreground capitalize">
+                          {m.donation?.foodCategory ?? "Food Item"}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {m.donation?.organization?.name ?? m.donation?.donor?.name ?? "Unknown donor"}
+                        </p>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => navigate("/delivery")}
+                      >
+                        <Truck className="w-3 h-3 mr-1" />Track Delivery
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-3xl font-bold text-foreground">Surplus Donations Feed</h1>
@@ -122,8 +286,8 @@ const DonationsFeed = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
             {filtered.map((donation) => {
               const urgency = deriveUrgency(donation.expiryTime);
-              const imgKey = resolveImage(donation.foodCategory);
-              const imgUrl = imageMap[imgKey];
+              const uploadedImage = donation.images?.[0]?.imageUrl;
+              const imgUrl = uploadedImage ?? imageMap[resolveImage(donation.foodCategory)];
               return (
                 <div key={donation.id} className="card-elevated-hover overflow-hidden animate-fade-in">
                   <div className="relative h-44 overflow-hidden">

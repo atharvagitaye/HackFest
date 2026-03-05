@@ -3,7 +3,12 @@ const { sendSuccess } = require('../utils/response');
 
 const create = async (req, res, next) => {
   try {
-    const donation = await donationService.createDonation(req.user.id, req.body);
+    // If client didn't supply organizationId, fall back to the donor's own org
+    const organizationId = req.body.organizationId || req.user.organizationId || null;
+    const donation = await donationService.createDonation(req.user.id, {
+      ...req.body,
+      organizationId,
+    });
     sendSuccess(res, donation, 'Donation created', 201);
   } catch (err) {
     next(err);

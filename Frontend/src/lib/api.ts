@@ -90,6 +90,9 @@ export const matchesApi = {
   getByDonation: (donationId: string) =>
     req<Match[]>('GET', `/matches/${donationId}`),
 
+  getMyMatches: () =>
+    req<Match[]>('GET', '/matches/my'),
+
   accept: (matchId: string) =>
     req<Match>('POST', `/matches/${matchId}/accept`),
 

@@ -31,6 +31,9 @@ const router = Router();
  */
 router.post('/generate/:donationId', requireAuth, requireRole(['DONOR', 'ADMIN']), matchController.generate);
 
+// Must be before /:id routes to avoid conflict
+router.get('/my', requireAuth, requireRole('RECIPIENT'), matchController.getMyMatches);
+
 /**
  * @swagger
  * /matches/{id}/accept:

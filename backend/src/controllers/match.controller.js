@@ -37,4 +37,13 @@ const reject = async (req, res, next) => {
   }
 };
 
-module.exports = { generate, listByDonation, accept, reject };
+const getMyMatches = async (req, res, next) => {
+  try {
+    const matches = await matchService.getMyMatches(req.user.id);
+    sendSuccess(res, matches);
+  } catch (err) {
+    next(err);
+  }
+};
+
+module.exports = { generate, listByDonation, accept, reject, getMyMatches };
