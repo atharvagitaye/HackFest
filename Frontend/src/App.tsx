@@ -16,6 +16,7 @@ import DonationReview from "./pages/DonationReview";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import RoleSelect from "./pages/RoleSelect";
+import AdminDashboard from "./pages/AdminDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -29,6 +30,7 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/donations" element={<DonationsFeed />} />
           <Route path="/matches" element={<AIMatching />} />
           <Route path="/live-map" element={<LiveMap />} />
