@@ -10,4 +10,14 @@ const summary = async (req, res, next) => {
   }
 };
 
-module.exports = { summary };
+const daily = async (req, res, next) => {
+  try {
+    const days = parseInt(req.query.days) || 30;
+    const data = await impactService.getDailyImpact(days);
+    sendSuccess(res, data);
+  } catch (err) {
+    next(err);
+  }
+};
+
+module.exports = { summary, daily };

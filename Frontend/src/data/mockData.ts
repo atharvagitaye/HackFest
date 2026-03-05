@@ -59,11 +59,11 @@ export const activityFeed = [
 export const organizationProfile = {
   name: "Global Food Rescue NGO",
   verified: true,
-  location: "Seattle, WA",
+  location: "Mumbai, India",
   joinedDate: "Oct 2023",
-  email: "partnerships@globalfoodrescue.com",
-  phone: "+1 (206) 555-0123",
-  address: "1234 Emerald Way, Suite 400, Seattle, WA 98101",
+  email: "partnerships@globalfoodrescue.in",
+  phone: "+91-98200-55555",
+  address: "Gokhale Rd North, Dadar West, Mumbai 400028",
   hours: "Mon-Sat, 08:00 - 20:00",
   capacity: "2 - 5 tons",
   trustScore: 4.9,
@@ -79,8 +79,8 @@ export const organizationProfile = {
   totalMeals: "1.2M+",
   wasteRedirected: "450 Tons",
   activePartners: "84",
-  latitude: 47.6062,
-  longitude: -122.3321,
+  latitude: 19.0178,
+  longitude: 72.8478,
 };
 
 export const mapMarkers = [

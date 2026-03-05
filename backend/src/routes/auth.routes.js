@@ -88,4 +88,18 @@ router.post('/login', validate(loginSchema), authController.login);
  */
 router.get('/me', requireAuth, authController.me);
 
+/**
+ * @swagger
+ * /auth/trust:
+ *   get:
+ *     summary: Get trust metrics for the current user
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Trust metric record
+ */
+router.get('/trust', requireAuth, authController.trust);
+
 module.exports = router;

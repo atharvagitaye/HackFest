@@ -3,13 +3,23 @@ import Footer from "@/components/layout/Footer";
 import { organizationProfile } from "@/data/mockData";
 import MapWidget from "@/components/shared/MapWidget";
 import { Button } from "@/components/ui/button";
-import { Shield, Mail, Phone, MapPin, Clock, Star, Award, Trophy, Zap, Users, CheckCircle, Leaf } from "lucide-react";
+import { Shield, Mail, Phone, MapPin, Clock, Star, Award, Trophy, Zap, Users, CheckCircle, Leaf, TrendingUp, AlertCircle, Timer } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { authApi } from "@/lib/api";
 
 const achieveIcons: Record<string, React.ElementType> = { Award, Trophy, Zap, Users };
 const achieveColors = ["bg-warning/10 text-warning", "bg-info/10 text-info", "bg-success/10 text-success", "bg-primary/10 text-primary"];
 
 const OrganizationProfile = () => {
   const org = organizationProfile;
+
+  const { data: trust } = useQuery({
+    queryKey: ["auth-trust"],
+    queryFn: authApi.trust,
+  });
+
+  const completionPct = trust?.completionRate != null ? Math.round(trust.completionRate * 100) : null;
+  const cancellationPct = trust?.cancellationRate != null ? Math.round(trust.cancellationRate * 100) : null;
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -47,15 +57,49 @@ const OrganizationProfile = () => {
                 <Shield className="w-4 h-4 text-primary" /> Trust & Reliability
               </h3>
               <div className="bg-muted rounded-xl p-6 text-center mb-4">
-                <p className="text-5xl font-bold text-primary mb-2">{org.trustScore}</p>
+                <p className="text-5xl font-bold text-primary mb-2">{trust?.avgRating != null ? trust.avgRating.toFixed(1) : org.trustScore}</p>
                 <div className="flex justify-center gap-0.5 mb-1">
                   {[1,2,3,4,5].map(i => (
-                    <Star key={i} className={`w-5 h-5 ${i <= 4 ? "text-warning fill-warning" : "text-muted-foreground"}`} />
+                    <Star key={i} className={`w-5 h-5 ${
+                      i <= Math.round(trust?.avgRating ?? org.trustScore) ? "text-warning fill-warning" : "text-muted-foreground"
+                    }`} />
                   ))}
                 </div>
                 <p className="text-sm text-muted-foreground">{org.reviewCount} Verified Reviews</p>
               </div>
-              <div className="space-y-2">
+
+              {/* Real trust metrics */}
+              <div className="space-y-3">
+                {[
+                  {
+                    icon: TrendingUp,
+                    label: "Completion Rate",
+                    value: completionPct != null ? `${completionPct}%` : "—",
+                    color: completionPct != null && completionPct >= 80 ? "text-success" : "text-warning",
+                  },
+                  {
+                    icon: Timer,
+                    label: "Avg Response Time",
+                    value: trust?.avgResponseTimeMinutes != null ? `${trust.avgResponseTimeMinutes} min` : "—",
+                    color: "text-info",
+                  },
+                  {
+                    icon: AlertCircle,
+                    label: "Cancellation Rate",
+                    value: cancellationPct != null ? `${cancellationPct}%` : "—",
+                    color: cancellationPct != null && cancellationPct <= 10 ? "text-success" : "text-destructive",
+                  },
+                ].map(({ icon: Icon, label, value, color }) => (
+                  <div key={label} className="flex items-center justify-between">
+                    <span className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Icon className="w-4 h-4" /> {label}
+                    </span>
+                    <span className={`text-sm font-semibold ${color}`}>{value}</span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="space-y-2 mt-4">
                 {Object.entries(org.ratings).map(([stars, pct]) => (
                   <div key={stars} className="flex items-center gap-2 text-sm">
                     <span className="w-4 text-foreground">{stars}</span>

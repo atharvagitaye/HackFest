@@ -117,6 +117,23 @@ export interface ImpactSummary {
   totalSuccessfulDeliveries: number;
 }
 
+export interface DailyImpactPoint {
+  date: string;
+  month: string;
+  kgSaved: number;
+  mealsServed: number;
+  co2Reduced: number;
+}
+
+// ─── Trust Metrics ────────────────────────────────────────────────────────────
+export interface TrustMetric {
+  userId: string;
+  completionRate: number | null;
+  avgRating: number | null;
+  cancellationRate: number | null;
+  avgResponseTimeMinutes: number | null;
+}
+
 // ─── Nearby Recipients ────────────────────────────────────────────────────────
 export interface NearbyRecipient {
   recipientId: string;

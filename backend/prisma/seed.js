@@ -36,26 +36,26 @@ async function main() {
   // ── Organizations ──────────────────────────────────────────────────────────
   const [orgGreen, orgCity, orgBistro, orgHope, orgFoodBank, orgCommCenter] =
     await Promise.all([
-      prisma.organization.create({ data: { name: 'Green Leaf Restaurant',   type: 'RESTAURANT',  address: '123 Main St, Downtown',      latitude: 40.7128, longitude: -74.0060, maxCapacityKg: 200 } }),
-      prisma.organization.create({ data: { name: 'City Catering Co.',        type: 'INSTITUTION', address: '456 Park Ave, Midtown',       latitude: 40.7570, longitude: -73.9860, maxCapacityKg: 500 } }),
-      prisma.organization.create({ data: { name: 'The Urban Bistro',         type: 'RESTAURANT',  address: '88 Broadway, Uptown',         latitude: 40.7831, longitude: -73.9712, maxCapacityKg: 150 } }),
-      prisma.organization.create({ data: { name: 'Hope Shelter NGO',         type: 'NGO',         address: '789 Hope Rd, Brooklyn',       latitude: 40.6782, longitude: -73.9442, maxCapacityKg: 300 } }),
-      prisma.organization.create({ data: { name: 'Community Food Bank',      type: 'NGO',         address: '321 Willow St, Queens',       latitude: 40.7282, longitude: -73.7949, maxCapacityKg: 1000 } }),
-      prisma.organization.create({ data: { name: 'Riverside Community Ctr',  type: 'NGO',         address: '14 River Lane, Bronx',        latitude: 40.8448, longitude: -73.8648, maxCapacityKg: 200 } }),
+      prisma.organization.create({ data: { name: 'Green Leaf Restaurant',   type: 'RESTAURANT',  address: '47 Hill Rd, Bandra West, Mumbai 400050',      latitude: 19.0596, longitude: 72.8294, maxCapacityKg: 200 } }),
+      prisma.organization.create({ data: { name: 'City Catering Co.',        type: 'INSTITUTION', address: '12 MIDC Cross Rd, Andheri East, Mumbai 400093', latitude: 19.1136, longitude: 72.8697, maxCapacityKg: 500 } }),
+      prisma.organization.create({ data: { name: 'The Urban Bistro',         type: 'RESTAURANT',  address: '8 Shahid Bhagat Singh Rd, Fort, Mumbai 400001',  latitude: 18.9281, longitude: 72.8327, maxCapacityKg: 150 } }),
+      prisma.organization.create({ data: { name: 'Hope Shelter NGO',         type: 'NGO',         address: '60-Feet Rd, Dharavi, Mumbai 400017',             latitude: 19.0400, longitude: 72.8530, maxCapacityKg: 300 } }),
+      prisma.organization.create({ data: { name: 'Community Food Bank',      type: 'NGO',         address: 'Gokhale Rd North, Dadar West, Mumbai 400028',    latitude: 19.0178, longitude: 72.8478, maxCapacityKg: 1000 } }),
+      prisma.organization.create({ data: { name: 'Riverside Community Ctr',  type: 'NGO',         address: 'Marve Rd, Malad West, Mumbai 400064',            latitude: 19.1872, longitude: 72.8491, maxCapacityKg: 200 } }),
     ]);
 
   console.log('✅ Organizations created');
 
   // ── Users ──────────────────────────────────────────────────────────────────
-  const admin = await prisma.user.create({ data: { name: 'Admin User',              email: 'admin@foodplatform.com',      passwordHash, role: 'ADMIN',     phone: '+1-555-0001', isVerified: true,  trustScore: 1.0 } });
+  const admin = await prisma.user.create({ data: { name: 'Admin User',              email: 'admin@foodplatform.com',      passwordHash, role: 'ADMIN',     phone: '+91-98200-00001', isVerified: true,  trustScore: 1.0 } });
 
-  const donor1 = await prisma.user.create({ data: { name: 'Green Leaf Restaurant',   email: 'donor@greenleaf.com',         passwordHash, role: 'DONOR',     phone: '+1-555-0002', isVerified: true,  trustScore: 0.88, organizationId: orgGreen.id } });
-  const donor2 = await prisma.user.create({ data: { name: 'City Catering Co.',        email: 'donor@citycatering.com',      passwordHash, role: 'DONOR',     phone: '+1-555-0003', isVerified: true,  trustScore: 0.79, organizationId: orgCity.id } });
-  const donor3 = await prisma.user.create({ data: { name: 'The Urban Bistro',         email: 'donor@urbanbistro.com',       passwordHash, role: 'DONOR',     phone: '+1-555-0006', isVerified: false, trustScore: 0.60, organizationId: orgBistro.id } });
+  const donor1 = await prisma.user.create({ data: { name: 'Green Leaf Restaurant',   email: 'donor@greenleaf.com',         passwordHash, role: 'DONOR',     phone: '+91-98200-00002', isVerified: true,  trustScore: 0.88, organizationId: orgGreen.id } });
+  const donor2 = await prisma.user.create({ data: { name: 'City Catering Co.',        email: 'donor@citycatering.com',      passwordHash, role: 'DONOR',     phone: '+91-98200-00003', isVerified: true,  trustScore: 0.79, organizationId: orgCity.id } });
+  const donor3 = await prisma.user.create({ data: { name: 'The Urban Bistro',         email: 'donor@urbanbistro.com',       passwordHash, role: 'DONOR',     phone: '+91-98200-00006', isVerified: false, trustScore: 0.60, organizationId: orgBistro.id } });
 
-  const recipient1 = await prisma.user.create({ data: { name: 'Hope Shelter NGO',    email: 'recipient@hopeshelter.org',   passwordHash, role: 'RECIPIENT', phone: '+1-555-0004', isVerified: true,  trustScore: 0.92, organizationId: orgHope.id } });
-  const recipient2 = await prisma.user.create({ data: { name: 'Community Food Bank', email: 'recipient@foodbank.org',      passwordHash, role: 'RECIPIENT', phone: '+1-555-0005', isVerified: true,  trustScore: 0.96, organizationId: orgFoodBank.id } });
-  const recipient3 = await prisma.user.create({ data: { name: 'Riverside Community', email: 'recipient@riverside.org',     passwordHash, role: 'RECIPIENT', phone: '+1-555-0007', isVerified: false, trustScore: 0.55, organizationId: orgCommCenter.id } });
+  const recipient1 = await prisma.user.create({ data: { name: 'Hope Shelter NGO',    email: 'recipient@hopeshelter.org',   passwordHash, role: 'RECIPIENT', phone: '+91-98200-00004', isVerified: true,  trustScore: 0.92, organizationId: orgHope.id } });
+  const recipient2 = await prisma.user.create({ data: { name: 'Community Food Bank', email: 'recipient@foodbank.org',      passwordHash, role: 'RECIPIENT', phone: '+91-98200-00005', isVerified: true,  trustScore: 0.96, organizationId: orgFoodBank.id } });
+  const recipient3 = await prisma.user.create({ data: { name: 'Riverside Community', email: 'recipient@riverside.org',     passwordHash, role: 'RECIPIENT', phone: '+91-98200-00007', isVerified: false, trustScore: 0.55, organizationId: orgCommCenter.id } });
 
   console.log('✅ Users created');
 
@@ -72,7 +72,7 @@ async function main() {
     donorId: donor1.id, organizationId: orgGreen.id,
     foodCategory: 'Artisan Bread & Pastries', quantityKg: 18, estimatedMeals: 36,
     preparedAt: hrs(-1), expiryTime: hrs(8), pickupDeadline: hrs(6),
-    latitude: 40.7128, longitude: -74.006, status: 'REPORTED',
+    latitude: 19.0596, longitude: 72.8294, status: 'REPORTED',
   }});
   await log(d_reported1.id, null, 'REPORTED', donor1.id, hrs(-1));
 
@@ -80,7 +80,7 @@ async function main() {
     donorId: donor2.id, organizationId: orgCity.id,
     foodCategory: 'Prepared Meals (Vegetarian)', quantityKg: 65, estimatedMeals: 130,
     preparedAt: hrs(-2), expiryTime: hrs(6), pickupDeadline: hrs(5),
-    latitude: 40.757, longitude: -73.986, status: 'REPORTED',
+    latitude: 19.1136, longitude: 72.8697, status: 'REPORTED',
   }});
   await log(d_reported2.id, null, 'REPORTED', donor2.id, hrs(-2));
 
@@ -88,7 +88,7 @@ async function main() {
     donorId: donor3.id, organizationId: orgBistro.id,
     foodCategory: 'Fresh Produce & Salads', quantityKg: 22, estimatedMeals: 44,
     preparedAt: hrs(-0.5), expiryTime: hrs(12), pickupDeadline: hrs(10),
-    latitude: 40.7831, longitude: -73.9712, status: 'REPORTED',
+    latitude: 18.9281, longitude: 72.8327, status: 'REPORTED',
   }});
   await log(d_reported3.id, null, 'REPORTED', donor3.id, hrs(-0.5));
 
@@ -97,7 +97,7 @@ async function main() {
     donorId: donor1.id, organizationId: orgGreen.id,
     foodCategory: 'Cooked Rice & Curry', quantityKg: 40, estimatedMeals: 80,
     preparedAt: hrs(-3), expiryTime: hrs(5), pickupDeadline: hrs(4),
-    latitude: 40.7128, longitude: -74.006, status: 'MATCHED',
+    latitude: 19.0596, longitude: 72.8294, status: 'MATCHED',
   }});
   await log(d_matched.id, null,       'REPORTED', donor1.id, hrs(-3));
   await log(d_matched.id, 'REPORTED', 'MATCHED',  admin.id,  hrs(-2.5));
@@ -114,7 +114,7 @@ async function main() {
     donorId: donor2.id, organizationId: orgCity.id,
     foodCategory: 'Dairy Products & Cheese', quantityKg: 25, estimatedMeals: 50,
     preparedAt: hrs(-5), expiryTime: hrs(4), pickupDeadline: hrs(3),
-    latitude: 40.757, longitude: -73.986, status: 'ACCEPTED',
+    latitude: 19.1136, longitude: 72.8697, status: 'ACCEPTED',
   }});
   await log(d_accepted.id, null,       'REPORTED', donor2.id,     hrs(-5));
   await log(d_accepted.id, 'REPORTED', 'MATCHED',  admin.id,      hrs(-4));
@@ -132,7 +132,7 @@ async function main() {
     donorId: donor1.id, organizationId: orgGreen.id,
     foodCategory: 'Sandwiches & Deli Items', quantityKg: 12, estimatedMeals: 24,
     preparedAt: hrs(-8), expiryTime: hrs(2), pickupDeadline: hrs(1),
-    latitude: 40.7128, longitude: -74.006, status: 'PICKED_UP',
+    latitude: 19.0596, longitude: 72.8294, status: 'PICKED_UP',
   }});
   await log(d_pickedup.id, null,        'REPORTED',  donor1.id,     hrs(-8));
   await log(d_pickedup.id, 'REPORTED',  'MATCHED',   admin.id,      hrs(-7));
@@ -156,7 +156,7 @@ async function main() {
     donorId: donor1.id, organizationId: orgGreen.id,
     foodCategory: 'Soup & Hot Meals', quantityKg: 55, estimatedMeals: 110,
     preparedAt: hrs(-26), expiryTime: hrs(-14), pickupDeadline: hrs(-16),
-    latitude: 40.7128, longitude: -74.006, status: 'DELIVERED',
+    latitude: 19.0596, longitude: 72.8294, status: 'DELIVERED',
   }});
   await log(d_delivered1.id, null,        'REPORTED',  donor1.id,     hrs(-26));
   await log(d_delivered1.id, 'REPORTED',  'MATCHED',   admin.id,      hrs(-25));
@@ -187,7 +187,7 @@ async function main() {
     donorId: donor2.id, organizationId: orgCity.id,
     foodCategory: 'Baked Goods & Pastries', quantityKg: 30, estimatedMeals: 60,
     preparedAt: hrs(-50), expiryTime: hrs(-38), pickupDeadline: hrs(-40),
-    latitude: 40.757, longitude: -73.986, status: 'DELIVERED',
+    latitude: 19.1136, longitude: 72.8697, status: 'DELIVERED',
   }});
   await log(d_delivered2.id, null,        'REPORTED',  donor2.id,     hrs(-50));
   await log(d_delivered2.id, 'REPORTED',  'MATCHED',   admin.id,      hrs(-48));
@@ -218,7 +218,7 @@ async function main() {
     donorId: donor3.id, organizationId: orgBistro.id,
     foodCategory: 'Fresh Fruit & Vegetables', quantityKg: 80, estimatedMeals: 160,
     preparedAt: hrs(-72), expiryTime: hrs(-60), pickupDeadline: hrs(-62),
-    latitude: 40.7831, longitude: -73.9712, status: 'DELIVERED',
+    latitude: 18.9281, longitude: 72.8327, status: 'DELIVERED',
   }});
   await log(d_delivered3.id, null,        'REPORTED',  donor3.id,     hrs(-72));
   await log(d_delivered3.id, 'REPORTED',  'MATCHED',   admin.id,      hrs(-70));
@@ -249,7 +249,7 @@ async function main() {
     donorId: donor2.id, organizationId: orgCity.id,
     foodCategory: 'Seafood Platter', quantityKg: 10, estimatedMeals: 20,
     preparedAt: hrs(-10), expiryTime: hrs(-2), pickupDeadline: hrs(-3),
-    latitude: 40.757, longitude: -73.986, status: 'CANCELLED',
+    latitude: 19.1136, longitude: 72.8697, status: 'CANCELLED',
   }});
   await log(d_cancelled.id, null,       'REPORTED',  donor2.id, hrs(-10));
   await log(d_cancelled.id, 'REPORTED', 'CANCELLED', donor2.id, hrs(-4));

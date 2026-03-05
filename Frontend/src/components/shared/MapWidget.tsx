@@ -61,16 +61,16 @@ function Recenter({ center }: { center: [number, number] }) {
 }
 
 // Default center: New York City (matches seed data)
-const NYC: [number, number] = [40.73, -73.93];
+const MUMBAI: [number, number] = [19.076, 72.8777];
 
 const MapWidget = ({ markers = [], className = "", onMarkerClick, fullScreen }: MapWidgetProps) => {
   const validMarkers = markers.filter((m) => m.lat !== 0 || m.lng !== 0);
 
-  // Auto-center on the first valid marker, otherwise NYC
+  // Auto-center on the first valid marker, otherwise Mumbai
   const center: [number, number] =
     validMarkers.length > 0
       ? [validMarkers[0].lat, validMarkers[0].lng]
-      : NYC;
+      : MUMBAI;
 
   return (
     <div className={`overflow-hidden rounded-xl ${fullScreen ? "h-full" : "h-80"} ${className}`}>

@@ -8,6 +8,8 @@ import type {
   Match,
   Delivery,
   ImpactSummary,
+  DailyImpactPoint,
+  TrustMetric,
   NearbyRecipient,
   Rating,
   SubmitRatingPayload,
@@ -52,6 +54,8 @@ export const authApi = {
     req<AuthResponse>('POST', '/auth/register', payload),
 
   me: () => req<User>('GET', '/auth/me'),
+
+  trust: () => req<TrustMetric>('GET', '/auth/trust'),
 };
 
 // ─── Donations ────────────────────────────────────────────────────────────────
@@ -137,4 +141,6 @@ export const adminApi = {
 // ─── Impact ───────────────────────────────────────────────────────────────────
 export const impactApi = {
   summary: () => req<ImpactSummary>('GET', '/impact/summary'),
+  daily: (days?: number) =>
+    req<DailyImpactPoint[]>('GET', `/impact/daily${days ? `?days=${days}` : ''}`),
 };

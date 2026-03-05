@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
-import { Camera, Sparkles, ArrowRight, ArrowLeft, Lock, CheckCircle } from "lucide-react";
+import { Camera, Sparkles, ArrowRight, ArrowLeft, Lock, CheckCircle, MapPin, Loader2 } from "lucide-react";
 import { donationsApi } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -38,6 +38,32 @@ const DonationWizard = () => {
   const [quantityKg, setQuantityKg] = useState("");
   const [estimatedMeals, setEstimatedMeals] = useState("");
 
+  // Location fields (GPS or manual)
+  const [latitude, setLatitude] = useState("");
+  const [longitude, setLongitude] = useState("");
+  const [gpsLoading, setGpsLoading] = useState(false);
+
+  const handleGps = () => {
+    if (!navigator.geolocation) {
+      toast.error("Geolocation is not supported by your browser");
+      return;
+    }
+    setGpsLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setLatitude(pos.coords.latitude.toFixed(6));
+        setLongitude(pos.coords.longitude.toFixed(6));
+        setGpsLoading(false);
+        toast.success("Location detected!");
+      },
+      () => {
+        setGpsLoading(false);
+        toast.error("Could not get location. Please enter coordinates manually.");
+      },
+      { timeout: 10000 }
+    );
+  };
+
   // Step 3 fields
   const [expiryTime, setExpiryTime] = useState("");
   const [pickupDeadline, setPickupDeadline] = useState("");
@@ -60,6 +86,8 @@ const DonationWizard = () => {
         expiryTime: expiryTime || undefined,
         pickupDeadline: pickupDeadline || undefined,
         preparedAt: new Date().toISOString(),
+        latitude: latitude ? parseFloat(latitude) : undefined,
+        longitude: longitude ? parseFloat(longitude) : undefined,
       }),
     onSuccess: async (donation) => {
       if (imageBase64 && donation?.id) {
@@ -238,6 +266,51 @@ const DonationWizard = () => {
                       className="w-full bg-muted rounded-lg px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-primary/30"
                     />
                   </div>
+                </div>
+
+                {/* Pickup Location */}
+                <div className="mt-6">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-sm font-medium text-foreground">Pickup Location</p>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleGps}
+                      disabled={gpsLoading}
+                    >
+                      {gpsLoading
+                        ? <><Loader2 className="w-3 h-3 mr-1 animate-spin" />Detecting...</>
+                        : <><MapPin className="w-3 h-3 mr-1" />Use My GPS Location</>}
+                    </Button>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-1">Latitude</p>
+                      <input
+                        type="number"
+                        step="any"
+                        value={latitude}
+                        onChange={(e) => setLatitude(e.target.value)}
+                        placeholder="e.g. 19.0596"
+                        className="w-full bg-muted rounded-lg px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-primary/30"
+                      />
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-1">Longitude</p>
+                      <input
+                        type="number"
+                        step="any"
+                        value={longitude}
+                        onChange={(e) => setLongitude(e.target.value)}
+                        placeholder="e.g. 72.8294"
+                        className="w-full bg-muted rounded-lg px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-primary/30"
+                      />
+                    </div>
+                  </div>
+                  {latitude && longitude && (
+                    <p className="text-xs text-success mt-1">📍 Location set: {parseFloat(latitude).toFixed(4)}, {parseFloat(longitude).toFixed(4)}</p>
+                  )}
                 </div>
               </div>
             )}

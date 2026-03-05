@@ -71,7 +71,7 @@ const DonationReview = () => {
                 </h3>
                 <Button variant="link" className="text-primary p-0 h-auto text-sm">Edit Location</Button>
               </div>
-              <MapWidget markers={[{ id: 1, type: "donation", name: "Artisan Baker's Loft", lat: 37.7749, lng: -122.4194, status: "pending" }]} />
+              <MapWidget markers={[{ id: 1, type: "donation", name: "Artisan Baker's Loft", lat: 19.0596, lng: 72.8294, status: "pending" }]} />
               <div className="mt-3">
                 <p className="text-sm font-semibold text-foreground">Artisan Baker's Loft</p>
                 <p className="text-xs text-muted-foreground">452 Market St, San Francisco, CA 94104</p>

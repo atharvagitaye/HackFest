@@ -1,4 +1,5 @@
 const authService = require('../services/auth.service');
+const prisma = require('../config/prisma');
 const { sendSuccess } = require('../utils/response');
 
 const register = async (req, res, next) => {
@@ -28,4 +29,22 @@ const me = async (req, res, next) => {
   }
 };
 
-module.exports = { register, login, me };
+const trust = async (req, res, next) => {
+  try {
+    const metric = await prisma.trustMetric.findUnique({
+      where: { userId: req.user.id },
+    });
+    // Return zeros if no metrics exist yet
+    sendSuccess(res, metric ?? {
+      userId: req.user.id,
+      completionRate: null,
+      avgRating: null,
+      cancellationRate: null,
+      avgResponseTimeMinutes: null,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+module.exports = { register, login, me, trust };

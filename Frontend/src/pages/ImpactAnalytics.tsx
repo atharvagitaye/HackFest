@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
-import { chartData, communityStories } from "@/data/mockData";
+import { communityStories } from "@/data/mockData";
 import { impactApi } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Calendar, TrendingUp, Utensils, CloudOff, Recycle } from "lucide-react";
@@ -18,6 +18,24 @@ const ImpactAnalytics = () => {
     queryKey: ["impact-summary"],
     queryFn: impactApi.summary,
   });
+
+  const { data: dailyRaw = [] } = useQuery({
+    queryKey: ["impact-daily"],
+    queryFn: () => impactApi.daily(30),
+  });
+
+  // Shape data for chart: use month label + both actual and a simple trailing-avg "predicted"
+  const chartData = dailyRaw.map((d, i, arr) => {
+    const window = arr.slice(Math.max(0, i - 2), i).map((x) => x.mealsServed);
+    const predicted = window.length
+      ? Math.round(window.reduce((a, b) => a + b, 0) / window.length)
+      : Math.round(d.mealsServed * 0.93);
+    return { month: d.month, date: d.date, actual: d.mealsServed, predicted };
+  });
+
+  const displayChart = chartData.length > 0 ? chartData : [
+    { month: "No Data", actual: 0, predicted: 0 },
+  ];
 
   const impactStats = [
     {
@@ -87,7 +105,7 @@ const ImpactAnalytics = () => {
           </div>
           <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chartData}>
+              <AreaChart data={displayChart}>
                 <defs>
                   <linearGradient id="colorActual" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="hsl(162, 63%, 30%)" stopOpacity={0.2} />
