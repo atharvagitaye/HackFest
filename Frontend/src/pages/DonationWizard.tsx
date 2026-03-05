@@ -19,19 +19,14 @@ const DonationWizard = () => {
   // Step 1 fields
   const [foodCategory, setFoodCategory] = useState(categories[0]);
   const [itemName, setItemName] = useState("");
-  const [imageBase64, setImageBase64] = useState<string>("");
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>("");
 
   const handleImageFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = reader.result as string;
-      setImageBase64(result);
-      setImagePreview(result);
-    };
-    reader.readAsDataURL(file);
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
   };
 
   // Step 2 fields
@@ -90,11 +85,11 @@ const DonationWizard = () => {
         longitude: longitude ? parseFloat(longitude) : undefined,
       }),
     onSuccess: async (donation) => {
-      if (imageBase64 && donation?.id) {
+      if (imageFile && donation?.id) {
         try {
-          await donationsApi.addImage(donation.id, imageBase64);
+          await donationsApi.addImage(donation.id, imageFile);
         } catch {
-          // non-fatal: donation was created, image upload is optional
+          // non-fatal
         }
       }
       toast.success("Donation posted successfully!");

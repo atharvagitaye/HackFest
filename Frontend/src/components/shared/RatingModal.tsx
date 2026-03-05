@@ -29,7 +29,7 @@ const RatingModal = ({ donationId, toUser, toUserName, onClose }: RatingModalPro
   });
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/40 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-foreground/40 backdrop-blur-sm">
       <div className="bg-background rounded-2xl shadow-2xl p-8 w-full max-w-md mx-4">
         <h2 className="text-xl font-bold text-foreground mb-1">Rate Your Experience</h2>
         <p className="text-sm text-muted-foreground mb-6">

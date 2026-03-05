@@ -9,7 +9,15 @@ const create = (data) =>
 const findById = (id) =>
   prisma.delivery.findUnique({
     where: { id },
-    include: { donation: true, recipient: { select: { id: true, name: true } } },
+    include: {
+      donation: {
+        include: {
+          donor: { select: { id: true, name: true } },
+          organization: { select: { id: true, name: true } },
+        },
+      },
+      recipient: { select: { id: true, name: true } },
+    },
   });
 
 const findByDonation = (donationId) =>

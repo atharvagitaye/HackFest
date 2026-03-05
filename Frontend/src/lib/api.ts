@@ -78,8 +78,20 @@ export const donationsApi = {
   nearbyRecipients: (id: string) =>
     req<NearbyRecipient[]>('GET', `/donations/${id}/nearby-recipients`),
 
-  addImage: (id: string, imageUrl: string) =>
-    req<{ id: string; imageUrl: string }>('POST', `/donations/${id}/images`, { imageUrl }),
+  addImage: (id: string, file: File) => {
+    const form = new FormData();
+    form.append('image', file);
+    const token = getToken();
+    return fetch(`${BASE}/donations/${id}/images`, {
+      method: 'POST',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      body: form,
+    }).then(async (res) => {
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.message || `Request failed (${res.status})`);
+      return json.data as { id: string; imageUrl: string };
+    });
+  },
 };
 
 // ─── Matches ──────────────────────────────────────────────────────────────────

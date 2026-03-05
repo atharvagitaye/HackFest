@@ -3,6 +3,7 @@ const { z } = require('zod');
 const donationController = require('../controllers/donation.controller');
 const { requireAuth, requireRole } = require('../middlewares/auth');
 const validate = require('../middlewares/validate');
+const upload = require('../middlewares/upload');
 
 const router = Router();
 
@@ -166,6 +167,7 @@ router.get('/:id/nearby-recipients', requireAuth, donationController.nearbyRecip
  *     security:
  *       - bearerAuth: []
  */
-router.post('/:id/images', requireAuth, validate(addImageSchema), donationController.addImage);
+// Accepts multipart/form-data with field "image", or JSON { imageUrl }
+router.post('/:id/images', requireAuth, upload.single('image'), donationController.addImage);
 
 module.exports = router;

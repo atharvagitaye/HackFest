@@ -11,13 +11,17 @@ const errorHandler = require('./middlewares/errorHandler');
 const swaggerSpec = require('./config/swagger');
 const config = require('./config/env');
 
+const path = require('path');
 const app = express();
 
 // ── Security & Parsing ────────────────────────────────────────────────────────
-app.use(helmet());
+app.use(helmet({ crossOriginResourcePolicy: false }));
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true }));
+
+// ── Static files (uploaded images) ───────────────────────────────────────────
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // ── Logging ───────────────────────────────────────────────────────────────────
 if (config.nodeEnv !== 'test') {

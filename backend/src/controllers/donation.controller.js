@@ -38,7 +38,8 @@ const updateStatus = async (req, res, next) => {
     const donation = await donationService.updateDonationStatus(
       req.params.id,
       req.body.status,
-      req.user.id
+      req.user.id,
+      req.user.role
     );
     sendSuccess(res, donation, 'Status updated');
   } catch (err) {
@@ -58,7 +59,11 @@ const nearbyRecipients = async (req, res, next) => {
 const addImage = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { imageUrl } = req.body;
+    // Support both multer file upload and legacy JSON imageUrl
+    const imageUrl = req.file
+      ? `/uploads/${req.file.filename}`
+      : req.body?.imageUrl;
+    if (!imageUrl) return next(require('../utils/AppError').badRequest('No image provided'));
     const image = await donationService.addImage(id, imageUrl);
     sendSuccess(res, image, 'Image added', 201);
   } catch (err) {
