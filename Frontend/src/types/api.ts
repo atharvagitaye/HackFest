@@ -103,6 +103,10 @@ export interface Delivery {
   delayMinutes?: number;
   status?: string;
   completed: boolean;
+  donation?: Donation & {
+    donor?: { id: string; name: string };
+    organization?: Organization;
+  };
 }
 
 // ─── Impact ───────────────────────────────────────────────────────────────────
@@ -123,4 +127,46 @@ export interface NearbyRecipient {
   organizationName: string;
   maxCapacityKg?: number;
   distance_km: number;
+}
+
+// ─── Ratings ──────────────────────────────────────────────────────────────────
+export interface Rating {
+  id: string;
+  donationId: string;
+  fromUser: string;
+  toUser: string;
+  rating: number;
+  feedback?: string;
+  createdAt: string;
+  from?: { id: string; name: string };
+  to?: { id: string; name: string };
+}
+
+export interface SubmitRatingPayload {
+  donationId: string;
+  toUser: string;
+  rating: number;
+  feedback?: string;
+}
+
+// ─── Admin ────────────────────────────────────────────────────────────────────
+export interface AdminUser {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  isVerified: boolean;
+  trustScore: number;
+  phone?: string;
+  createdAt: string;
+  organizationId?: string;
+  organization?: Organization;
+  _count: { donations: number };
+}
+
+export interface AdminStats {
+  totalUsers: number;
+  totalDonations: number;
+  totalOrganizations: number;
+  pendingVerification: number;
 }

@@ -54,6 +54,7 @@ const App = () => (
           <Route path="/donations" element={<ProtectedRoute><DonationsFeed /></ProtectedRoute>} />
           <Route path="/matches" element={<ProtectedRoute><AIMatching /></ProtectedRoute>} />
           <Route path="/live-map" element={<ProtectedRoute><LiveMap /></ProtectedRoute>} />
+          <Route path="/delivery" element={<ProtectedRoute><DeliveryTracking /></ProtectedRoute>} />
           <Route path="/delivery/:id" element={<ProtectedRoute><DeliveryTracking /></ProtectedRoute>} />
           <Route path="/impact" element={<ProtectedRoute><ImpactAnalytics /></ProtectedRoute>} />
           <Route path="/organization" element={<ProtectedRoute><OrganizationProfile /></ProtectedRoute>} />

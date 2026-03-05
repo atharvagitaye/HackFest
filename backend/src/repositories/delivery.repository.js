@@ -15,7 +15,21 @@ const findById = (id) =>
 const findByDonation = (donationId) =>
   prisma.delivery.findFirst({ where: { donationId } });
 
+const findByRecipient = (recipientId) =>
+  prisma.delivery.findMany({
+    where: { recipientId },
+    include: {
+      donation: {
+        include: {
+          donor: { select: { id: true, name: true } },
+          organization: { select: { id: true, name: true } },
+        },
+      },
+    },
+    orderBy: { pickupTime: 'desc' },
+  });
+
 const complete = (id, data) =>
   prisma.delivery.update({ where: { id }, data });
 
-module.exports = { create, findById, findByDonation, complete };
+module.exports = { create, findById, findByDonation, findByRecipient, complete };

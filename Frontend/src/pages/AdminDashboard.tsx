@@ -22,21 +22,20 @@ import {
   Users,
   FileText,
   Building2,
-  TrendingUp,
+  AlertCircle,
   Search,
-  MoreVertical,
   CheckCircle,
   XCircle,
-  AlertCircle,
   Eye,
   Trash2,
   Lock,
-  Unlock,
-  Calendar,
   BarChart3,
   Plus,
 } from "lucide-react";
 import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { adminApi } from "@/lib/api";
 import {
   LineChart,
   Line,
@@ -44,44 +43,10 @@ import {
   YAxis,
   Tooltip,
   ResponsiveContainer,
-  BarChart,
-  Bar,
   PieChart,
   Pie,
   Cell,
 } from "recharts";
-
-// Mock Data
-const adminStats = [
-  { label: "Total Users", value: "2,847", change: "+12%", icon: Users, color: "bg-blue-500" },
-  { label: "Active Donations", value: "342", change: "+23%", icon: FileText, color: "bg-green-500" },
-  { label: "Organizations", value: "156", change: "+8%", icon: Building2, color: "bg-purple-500" },
-  { label: "Pending Verification", value: "23", change: "-5%", icon: AlertCircle, color: "bg-orange-500" },
-];
-
-const userData = [
-  { id: 1, name: "John Restaurant", email: "john@restaurant.com", role: "DONOR", status: "verified", joinedDate: "2025-12-15", donations: 45 },
-  { id: 2, name: "Mission Shelter", email: "info@mission.gov", role: "RECIPIENT", status: "verified", joinedDate: "2025-11-20", donations: 0 },
-  { id: 3, name: "Green NGO", email: "contact@greenngoa.org", role: "RECIPIENT", status: "pending", joinedDate: "2026-02-10", donations: 0 },
-  { id: 4, name: "City Catering", email: "admin@citycatering.com", role: "DONOR", status: "verified", joinedDate: "2025-10-05", donations: 78 },
-  { id: 5, name: "Riverside Community Center", email: "riverside@cc.org", role: "RECIPIENT", status: "flagged", joinedDate: "2026-01-15", donations: 0 },
-  { id: 6, name: "Fresh Bakery", email: "hello@freshbakery.com", role: "DONOR", status: "active", joinedDate: "2026-02-01", donations: 12 },
-];
-
-const donationData = [
-  { id: "D001", donor: "John Restaurant", quantity: "45kg", status: "delivered", recipient: "Mission Shelter", dateCreated: "2026-03-01" },
-  { id: "D002", donor: "City Catering", quantity: "120kg", status: "in-transit", recipient: "Green NGO", dateCreated: "2026-03-03" },
-  { id: "D003", donor: "Fresh Bakery", quantity: "12kg", status: "pending", recipient: "Riverside CC", dateCreated: "2026-03-04" },
-  { id: "D004", donor: "John Restaurant", quantity: "38kg", status: "matched", recipient: "Mission Shelter", dateCreated: "2026-03-04" },
-  { id: "D005", donor: "City Catering", quantity: "95kg", status: "cancelled", recipient: "-", dateCreated: "2026-02-28" },
-];
-
-const organizationVerification = [
-  { id: "ORG001", name: "Green Future NGO", type: "NGO", status: "pending", submittedDate: "2026-02-28", documents: 5 },
-  { id: "ORG002", name: "Elite Bistro", type: "RESTAURANT", status: "approved", submittedDate: "2026-02-15", documents: 3 },
-  { id: "ORG003", name: "Health Institute", type: "INSTITUTION", status: "rejected", submittedDate: "2026-02-10", documents: 4, reason: "Invalid address" },
-  { id: "ORG004", name: "Urban Harvest", type: "NGO", status: "under-review", submittedDate: "2026-03-01", documents: 6 },
-];
 
 const chartData = [
   { month: "Jan", users: 450, donations: 120, organizations: 35 },
@@ -90,55 +55,85 @@ const chartData = [
   { month: "Apr", users: 890, donations: 280, organizations: 58 },
 ];
 
-const donationStatusData = [
-  { name: "Delivered", value: 234, color: "#10b981" },
-  { name: "In Transit", value: 89, color: "#f59e0b" },
-  { name: "Pending", value: 45, color: "#3b82f6" },
-  { name: "Cancelled", value: 12, color: "#ef4444" },
-];
-
 const AdminDashboard = () => {
-  const [selectedUser, setSelectedUser] = useState<number | null>(null);
+  const queryClient = useQueryClient();
   const [userFilter, setUserFilter] = useState("all");
   const [donationFilter, setDonationFilter] = useState("all");
-  const [orgFilter, setOrgFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
 
-  const filteredUsers = userData.filter((user) => {
-    const matchesFilter = userFilter === "all" || user.status === userFilter;
-    const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase());
+  /* ── Real API queries ── */
+  const { data: stats } = useQuery({
+    queryKey: ["admin-stats"],
+    queryFn: adminApi.getStats,
+  });
+
+  const { data: users = [] } = useQuery({
+    queryKey: ["admin-users"],
+    queryFn: () => adminApi.listUsers(),
+  });
+
+  const { data: donations = [] } = useQuery({
+    queryKey: ["admin-donations"],
+    queryFn: () => adminApi.listDonations(),
+  });
+
+  /* ── Mutations ── */
+  const verifyMutation = useMutation({
+    mutationFn: ({ id, verified }: { id: string; verified: boolean }) =>
+      adminApi.verifyUser(id, verified),
+    onSuccess: () => {
+      toast.success("User updated.");
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-stats"] });
+    },
+    onError: (err: Error) => toast.error(err.message ?? "Failed to update user"),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => adminApi.deleteUser(id),
+    onSuccess: () => {
+      toast.success("User deleted.");
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-stats"] });
+    },
+    onError: (err: Error) => toast.error(err.message ?? "Failed to delete user"),
+  });
+
+  /* ── Derived stat cards from real data ── */
+  const adminStats = [
+    { label: "Total Users", value: stats?.totalUsers?.toString() ?? "—", icon: Users, color: "bg-blue-500" },
+    { label: "Total Donations", value: stats?.totalDonations?.toString() ?? "—", icon: FileText, color: "bg-green-500" },
+    { label: "Organizations", value: stats?.totalOrganizations?.toString() ?? "—", icon: Building2, color: "bg-purple-500" },
+    { label: "Pending Verification", value: stats?.pendingVerification?.toString() ?? "—", icon: AlertCircle, color: "bg-orange-500" },
+  ];
+
+  /* ── Pie chart data from real donations ── */
+  const statusCounts: Record<string, number> = {};
+  donations.forEach((d: any) => {
+    statusCounts[d.status] = (statusCounts[d.status] ?? 0) + 1;
+  });
+  const statusColors: Record<string, string> = {
+    DELIVERED: "#10b981", PICKED_UP: "#f59e0b", REPORTED: "#3b82f6",
+    MATCHED: "#8b5cf6", ACCEPTED: "#06b6d4", CANCELLED: "#ef4444", EXPIRED: "#6b7280",
+  };
+  const donationStatusData = Object.entries(statusCounts).map(([name, value]) => ({
+    name, value, color: statusColors[name] ?? "#6b7280",
+  }));
+
+  /* ── Filters ── */
+  const filteredUsers = users.filter((u: any) => {
+    const matchesFilter = userFilter === "all"
+      || (userFilter === "verified" && u.isVerified)
+      || (userFilter === "pending" && !u.isVerified);
+    const matchesSearch =
+      u.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      u.email?.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesFilter && matchesSearch;
   });
 
-  const filteredDonations = donationData.filter((d) =>
+  const filteredDonations = (donations as any[]).filter((d: any) =>
     donationFilter === "all" || d.status === donationFilter
   );
-
-  const filteredOrganizations = organizationVerification.filter((org) =>
-    orgFilter === "all" || org.status === orgFilter
-  );
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "verified":
-      case "approved":
-      case "delivered":
-        return "bg-green-100 text-green-800";
-      case "pending":
-      case "under-review":
-      case "in-transit":
-        return "bg-yellow-100 text-yellow-800";
-      case "flagged":
-      case "rejected":
-      case "cancelled":
-        return "bg-red-100 text-red-800";
-      case "active":
-        return "bg-blue-100 text-blue-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
-  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -167,12 +162,7 @@ const AdminDashboard = () => {
                     <Icon className="w-4 h-4 text-white" />
                   </div>
                 </div>
-                <div className="flex items-baseline gap-2">
-                  <p className="text-3xl font-bold text-foreground">{stat.value}</p>
-                  <span className={`text-sm font-medium ${stat.change.startsWith("+") ? "text-green-600" : "text-red-600"}`}>
-                    {stat.change}
-                  </span>
-                </div>
+                <p className="text-3xl font-bold text-foreground">{stat.value}</p>
               </div>
             );
           })}
@@ -280,7 +270,7 @@ const AdminDashboard = () => {
                 </tr>
               </thead>
               <tbody>
-                {filteredUsers.map((user) => (
+                {filteredUsers.map((user: any) => (
                   <tr key={user.id} className="border-b border-border hover:bg-muted/50">
                     <td className="py-3 px-4 font-medium">{user.name}</td>
                     <td className="py-3 px-4 text-muted-foreground">{user.email}</td>
@@ -288,14 +278,18 @@ const AdminDashboard = () => {
                       <Badge variant="outline">{user.role}</Badge>
                     </td>
                     <td className="py-3 px-4">
-                      <Badge className={getStatusColor(user.status)}>{user.status}</Badge>
+                      <Badge className={user.isVerified ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"}>
+                        {user.isVerified ? "Verified" : "Pending"}
+                      </Badge>
                     </td>
-                    <td className="py-3 px-4 text-muted-foreground">{user.joinedDate}</td>
-                    <td className="py-3 px-4 font-medium">{user.donations}</td>
+                    <td className="py-3 px-4 text-muted-foreground">
+                      {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : "—"}
+                    </td>
+                    <td className="py-3 px-4 font-medium">{user._count?.donations ?? 0}</td>
                     <td className="py-3 px-4">
                       <div className="flex gap-2">
                         <Button size="sm" variant="ghost"><Eye className="w-4 h-4" /></Button>
-                        {user.status === "pending" && (
+                        {!user.isVerified && (
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
                               <Button size="sm" variant="ghost"><CheckCircle className="w-4 h-4 text-green-600" /></Button>
@@ -307,24 +301,34 @@ const AdminDashboard = () => {
                               </AlertDialogDescription>
                               <div className="flex justify-end gap-3">
                                 <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction className="bg-green-600 hover:bg-green-700">Verify</AlertDialogAction>
+                                <AlertDialogAction
+                                  className="bg-green-600 hover:bg-green-700"
+                                  onClick={() => verifyMutation.mutate({ id: user.id, verified: true })}
+                                >
+                                  Verify
+                                </AlertDialogAction>
                               </div>
                             </AlertDialogContent>
                           </AlertDialog>
                         )}
-                        {user.status === "verified" && (
+                        {user.isVerified && (
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
                               <Button size="sm" variant="ghost"><Lock className="w-4 h-4 text-blue-600" /></Button>
                             </AlertDialogTrigger>
                             <AlertDialogContent>
-                              <AlertDialogTitle>Suspend User</AlertDialogTitle>
+                              <AlertDialogTitle>Unverify User</AlertDialogTitle>
                               <AlertDialogDescription>
-                                Are you sure you want to suspend {user.name}? They will lose platform access.
+                                Are you sure you want to unverify {user.name}? They will lose verified status.
                               </AlertDialogDescription>
                               <div className="flex justify-end gap-3">
                                 <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction className="bg-blue-600 hover:bg-blue-700">Suspend</AlertDialogAction>
+                                <AlertDialogAction
+                                  className="bg-blue-600 hover:bg-blue-700"
+                                  onClick={() => verifyMutation.mutate({ id: user.id, verified: false })}
+                                >
+                                  Unverify
+                                </AlertDialogAction>
                               </div>
                             </AlertDialogContent>
                           </AlertDialog>
@@ -340,7 +344,12 @@ const AdminDashboard = () => {
                             </AlertDialogDescription>
                             <div className="flex justify-end gap-3">
                               <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction className="bg-red-600 hover:bg-red-700">Delete</AlertDialogAction>
+                              <AlertDialogAction
+                                className="bg-red-600 hover:bg-red-700"
+                                onClick={() => deleteMutation.mutate(user.id)}
+                              >
+                                Delete
+                              </AlertDialogAction>
                             </div>
                           </AlertDialogContent>
                         </AlertDialog>
@@ -370,11 +379,13 @@ const AdminDashboard = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Donations</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="matched">Matched</SelectItem>
-                <SelectItem value="in-transit">In Transit</SelectItem>
-                <SelectItem value="delivered">Delivered</SelectItem>
-                <SelectItem value="cancelled">Cancelled</SelectItem>
+                <SelectItem value="REPORTED">Reported</SelectItem>
+                <SelectItem value="MATCHED">Matched</SelectItem>
+                <SelectItem value="ACCEPTED">Accepted</SelectItem>
+                <SelectItem value="PICKED_UP">Picked Up</SelectItem>
+                <SelectItem value="DELIVERED">Delivered</SelectItem>
+                <SelectItem value="CANCELLED">Cancelled</SelectItem>
+                <SelectItem value="EXPIRED">Expired</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -385,8 +396,8 @@ const AdminDashboard = () => {
               <thead>
                 <tr className="border-b border-border">
                   <th className="text-left py-3 px-4 font-semibold">ID</th>
+                  <th className="text-left py-3 px-4 font-semibold">Food</th>
                   <th className="text-left py-3 px-4 font-semibold">Donor</th>
-                  <th className="text-left py-3 px-4 font-semibold">Recipient</th>
                   <th className="text-left py-3 px-4 font-semibold">Quantity</th>
                   <th className="text-left py-3 px-4 font-semibold">Status</th>
                   <th className="text-left py-3 px-4 font-semibold">Date</th>
@@ -394,16 +405,24 @@ const AdminDashboard = () => {
                 </tr>
               </thead>
               <tbody>
-                {filteredDonations.map((donation) => (
+                {filteredDonations.map((donation: any) => (
                   <tr key={donation.id} className="border-b border-border hover:bg-muted/50">
-                    <td className="py-3 px-4 font-medium text-primary">{donation.id}</td>
-                    <td className="py-3 px-4">{donation.donor}</td>
-                    <td className="py-3 px-4">{donation.recipient}</td>
-                    <td className="py-3 px-4 font-medium">{donation.quantity}</td>
-                    <td className="py-3 px-4">
-                      <Badge className={getStatusColor(donation.status)}>{donation.status}</Badge>
+                    <td className="py-3 px-4 font-medium text-primary">#{donation.id?.slice(0, 8)}</td>
+                    <td className="py-3 px-4 capitalize">{donation.foodCategory ?? "—"}</td>
+                    <td className="py-3 px-4">{donation.donor?.name ?? donation.organization?.name ?? "—"}</td>
+                    <td className="py-3 px-4 font-medium">
+                      {donation.quantityKg != null ? `${donation.quantityKg} kg` : "—"}
                     </td>
-                    <td className="py-3 px-4 text-muted-foreground">{donation.dateCreated}</td>
+                    <td className="py-3 px-4">
+                      <Badge className={
+                        donation.status === "DELIVERED" ? "bg-green-100 text-green-800" :
+                        donation.status === "CANCELLED" || donation.status === "EXPIRED" ? "bg-red-100 text-red-800" :
+                        "bg-yellow-100 text-yellow-800"
+                      }>{donation.status}</Badge>
+                    </td>
+                    <td className="py-3 px-4 text-muted-foreground">
+                      {donation.createdAt ? new Date(donation.createdAt).toLocaleDateString() : "—"}
+                    </td>
                     <td className="py-3 px-4">
                       <Button size="sm" variant="ghost"><Eye className="w-4 h-4" /></Button>
                     </td>
@@ -419,65 +438,54 @@ const AdminDashboard = () => {
           <div className="flex items-center justify-between mb-6">
             <div>
               <h3 className="font-semibold text-foreground">Organization Verification</h3>
-              <p className="text-sm text-muted-foreground">Review and approve organization registrations</p>
+              <p className="text-sm text-muted-foreground">Users with registered organizations</p>
             </div>
-          </div>
-
-          {/* Filter */}
-          <div className="mb-4">
-            <Select value={orgFilter} onValueChange={setOrgFilter}>
-              <SelectTrigger className="w-48">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Organizations</SelectItem>
-                <SelectItem value="pending">Pending Review</SelectItem>
-                <SelectItem value="under-review">Under Review</SelectItem>
-                <SelectItem value="approved">Approved</SelectItem>
-                <SelectItem value="rejected">Rejected</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
 
           {/* Organizations Grid */}
           <div className="grid md:grid-cols-2 gap-4">
-            {filteredOrganizations.map((org) => (
-              <div key={org.id} className="border border-border rounded-lg p-4 hover:bg-muted/50">
+            {users.filter((u: any) => u.organization).map((u: any) => (
+              <div key={u.id} className="border border-border rounded-lg p-4 hover:bg-muted/50">
                 <div className="flex items-start justify-between mb-3">
                   <div>
-                    <h4 className="font-semibold text-foreground">{org.name}</h4>
-                    <p className="text-xs text-muted-foreground">{org.type}</p>
+                    <h4 className="font-semibold text-foreground">{u.organization.name}</h4>
+                    <p className="text-xs text-muted-foreground">{u.role} · {u.name}</p>
                   </div>
-                  <Badge className={getStatusColor(org.status)}>{org.status}</Badge>
+                  <Badge className={u.isVerified ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"}>
+                    {u.isVerified ? "Verified" : "Pending"}
+                  </Badge>
                 </div>
                 <div className="text-xs text-muted-foreground mb-4">
-                  <p>Submitted: {org.submittedDate}</p>
-                  <p>Documents: {org.documents}</p>
-                  {org.reason && <p className="text-red-600 mt-1">Reason: {org.reason}</p>}
+                  <p>Email: {u.email}</p>
+                  <p>Joined: {u.createdAt ? new Date(u.createdAt).toLocaleDateString() : "—"}</p>
                 </div>
                 <div className="flex gap-2">
-                  {org.status === "pending" || org.status === "under-review" ? (
-                    <>
-                      <Button size="sm" className="flex-1 bg-green-600 hover:bg-green-700">
-                        <CheckCircle className="w-3 h-3 mr-1" />Approve
-                      </Button>
-                      <Button size="sm" variant="destructive" className="flex-1">
-                        <XCircle className="w-3 h-3 mr-1" />Reject
-                      </Button>
-                    </>
+                  {!u.isVerified ? (
+                    <Button
+                      size="sm"
+                      className="flex-1 bg-green-600 hover:bg-green-700"
+                      onClick={() => verifyMutation.mutate({ id: u.id, verified: true })}
+                      disabled={verifyMutation.isPending}
+                    >
+                      <CheckCircle className="w-3 h-3 mr-1" />Verify
+                    </Button>
                   ) : (
-                    <>
-                      <Button size="sm" variant="outline" className="flex-1">
-                        <Eye className="w-3 h-3 mr-1" />View Details
-                      </Button>
-                      <Button size="sm" variant="ghost" className="flex-1">
-                        <MoreVertical className="w-3 h-3" />
-                      </Button>
-                    </>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="flex-1"
+                      onClick={() => verifyMutation.mutate({ id: u.id, verified: false })}
+                      disabled={verifyMutation.isPending}
+                    >
+                      <XCircle className="w-3 h-3 mr-1" />Unverify
+                    </Button>
                   )}
                 </div>
               </div>
             ))}
+            {users.filter((u: any) => u.organization).length === 0 && (
+              <p className="text-sm text-muted-foreground col-span-2 py-4 text-center">No organizations registered yet.</p>
+            )}
           </div>
         </div>
       </main>

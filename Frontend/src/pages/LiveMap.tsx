@@ -1,12 +1,30 @@
 import Navbar from "@/components/layout/Navbar";
 import MapWidget from "@/components/shared/MapWidget";
-import { mapMarkers } from "@/data/mockData";
 import { Button } from "@/components/ui/button";
 import { Truck, MapPin, ArrowDown, ArrowUp, Navigation, Search } from "lucide-react";
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { donationsApi } from "@/lib/api";
 
 const LiveMap = () => {
-  const [selectedMarker, setSelectedMarker] = useState<any>(mapMarkers[2]);
+  const { data: donations = [] } = useQuery({
+    queryKey: ["donations"],
+    queryFn: () => donationsApi.list(),
+  });
+
+  // Convert donations with coordinates to markers; fallback to spread-out demo positions
+  const mapMarkers = donations
+    .filter((d) => d.status !== "CANCELLED" && d.status !== "EXPIRED")
+    .map((d, i) => ({
+      id: i,
+      type: "donation",
+      name: d.foodCategory ?? "Donation",
+      lat: (d as any).latitude ?? 0,
+      lng: (d as any).longitude ?? 0,
+      status: d.status,
+    }));
+
+  const [selectedMarker, setSelectedMarker] = useState<any>(mapMarkers[0] ?? null);
 
   return (
     <div className="min-h-screen bg-background flex flex-col">

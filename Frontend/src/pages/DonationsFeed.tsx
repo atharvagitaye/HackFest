@@ -1,13 +1,15 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import StatusBadge from "@/components/shared/StatusBadge";
 import { donationsApi } from "@/lib/api";
 import { Donation } from "@/types/api";
 import { Button } from "@/components/ui/button";
-import { Plus, Package, MapPin } from "lucide-react";
+import { Plus, Package, MapPin, X } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 import foodBakery from "@/assets/food-bakery.jpg";
 import foodProduce from "@/assets/food-produce.jpg";
@@ -43,11 +45,22 @@ function resolveImage(foodCategory?: string): string {
 
 const DonationsFeed = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
   const [activeCategory, setActiveCategory] = useState("All Items");
 
   const { data: donationsData, isLoading } = useQuery({
     queryKey: ["donations"],
     queryFn: () => donationsApi.list(),
+  });
+
+  const cancelMutation = useMutation({
+    mutationFn: (id: string) => donationsApi.updateStatus(id, "CANCELLED"),
+    onSuccess: () => {
+      toast.success("Donation cancelled.");
+      queryClient.invalidateQueries({ queryKey: ["donations"] });
+    },
+    onError: (err: Error) => toast.error(err.message ?? "Failed to cancel"),
   });
 
   const donations: Donation[] = donationsData ?? [];
@@ -129,6 +142,23 @@ const DonationsFeed = () => {
                       <MapPin className="w-3 h-3" />
                       {donation.donor?.name ?? donation.organization?.name ?? "Unknown"}
                     </div>
+                    {user?.role === "DONOR" &&
+                      donation.status !== "DELIVERED" &&
+                      donation.status !== "CANCELLED" &&
+                      donation.status !== "EXPIRED" && (
+                        <div className="mt-3 flex justify-end">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-destructive hover:text-destructive/90 h-7 px-2 text-xs"
+                            onClick={(e) => { e.stopPropagation(); cancelMutation.mutate(donation.id); }}
+                            disabled={cancelMutation.isPending}
+                          >
+                            <X className="w-3 h-3 mr-1" />
+                            Cancel
+                          </Button>
+                        </div>
+                      )}
                   </div>
                 </div>
               );

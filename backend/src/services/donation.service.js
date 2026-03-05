@@ -3,10 +3,13 @@ const AppError = require('../utils/AppError');
 const config = require('../config/env');
 
 const VALID_TRANSITIONS = {
-  REPORTED: 'MATCHED',
-  MATCHED: 'ACCEPTED',
-  ACCEPTED: 'PICKED_UP',
-  PICKED_UP: 'DELIVERED',
+  REPORTED: ['MATCHED', 'CANCELLED'],
+  MATCHED: ['ACCEPTED', 'CANCELLED'],
+  ACCEPTED: ['PICKED_UP', 'CANCELLED'],
+  PICKED_UP: ['DELIVERED'],
+  DELIVERED: [],
+  CANCELLED: [],
+  EXPIRED: [],
 };
 
 const createDonation = async (donorId, body) => {
@@ -30,10 +33,10 @@ const updateDonationStatus = async (id, newStatus, changedBy) => {
   const donation = await donationRepo.findById(id);
   if (!donation) throw AppError.notFound('Donation not found');
 
-  const expectedNext = VALID_TRANSITIONS[donation.status];
-  if (!expectedNext || expectedNext !== newStatus) {
+  const allowed = VALID_TRANSITIONS[donation.status] ?? [];
+  if (!allowed.includes(newStatus)) {
     throw AppError.badRequest(
-      `Invalid status transition: ${donation.status} → ${newStatus}. Expected: ${expectedNext || 'no further transitions'}`,
+      `Invalid status transition: ${donation.status} → ${newStatus}. Allowed: ${allowed.join(', ') || 'none'}`,
       'INVALID_TRANSITION'
     );
   }
@@ -58,4 +61,10 @@ const getNearbyRecipients = async (donationId) => {
   return donationRepo.findNearbyRecipients(donation, radius);
 };
 
-module.exports = { createDonation, listDonations, getDonation, updateDonationStatus, getNearbyRecipients };
+const addImage = async (donationId, imageUrl) => {
+  const donation = await donationRepo.findById(donationId);
+  if (!donation) throw AppError.notFound('Donation not found');
+  return donationRepo.addImage(donationId, imageUrl);
+};
+
+module.exports = { createDonation, listDonations, getDonation, updateDonationStatus, getNearbyRecipients, addImage };

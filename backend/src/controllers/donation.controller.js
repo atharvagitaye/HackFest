@@ -50,4 +50,15 @@ const nearbyRecipients = async (req, res, next) => {
   }
 };
 
-module.exports = { create, list, getById, updateStatus, nearbyRecipients };
+const addImage = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { imageUrl } = req.body;
+    const image = await donationService.addImage(id, imageUrl);
+    sendSuccess(res, image, 'Image added', 201);
+  } catch (err) {
+    next(err);
+  }
+};
+
+module.exports = { create, list, getById, updateStatus, nearbyRecipients, addImage };

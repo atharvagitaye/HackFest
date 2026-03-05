@@ -24,6 +24,25 @@ const AIMatching = () => {
     enabled: !!selectedDonationId,
   });
 
+  const acceptMutation = useMutation({
+    mutationFn: (matchId: string) => matchesApi.accept(matchId),
+    onSuccess: () => {
+      toast.success("Match accepted! The recipient will be notified.");
+      queryClient.invalidateQueries({ queryKey: ["matches", selectedDonationId] });
+      queryClient.invalidateQueries({ queryKey: ["donations"] });
+    },
+    onError: (err: Error) => toast.error(err.message ?? "Failed to accept match"),
+  });
+
+  const rejectMutation = useMutation({
+    mutationFn: (matchId: string) => matchesApi.reject(matchId),
+    onSuccess: () => {
+      toast.success("Match rejected.");
+      queryClient.invalidateQueries({ queryKey: ["matches", selectedDonationId] });
+    },
+    onError: (err: Error) => toast.error(err.message ?? "Failed to reject match"),
+  });
+
   const recalculateMutation = useMutation({
     mutationFn: () => matchesApi.generate(selectedDonationId),
     onSuccess: () => {
@@ -148,8 +167,19 @@ const AIMatching = () => {
                         ))}
                       </div>
                       <div className="flex gap-3">
-                        <Button>Accept Match</Button>
-                        <Button variant="outline">View Details</Button>
+                        <Button
+                          onClick={() => acceptMutation.mutate(topMatch.id)}
+                          disabled={acceptMutation.isPending}
+                        >
+                          {acceptMutation.isPending ? "Accepting..." : "Accept Match"}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => rejectMutation.mutate(topMatch.id)}
+                          disabled={rejectMutation.isPending}
+                        >
+                          Reject
+                        </Button>
                       </div>
                     </div>
                   </div>
@@ -189,7 +219,14 @@ const AIMatching = () => {
                           TRUST {(match.recipient?.trustScore ?? 0).toFixed(1)}
                         </span>
                       </div>
-                      <Button variant="outline" className="w-full">Select Match</Button>
+                      <Button
+                        variant="outline"
+                        className="w-full"
+                        onClick={() => acceptMutation.mutate(match.id)}
+                        disabled={acceptMutation.isPending}
+                      >
+                        Select Match
+                      </Button>
                     </div>
                   ))}
                 </div>

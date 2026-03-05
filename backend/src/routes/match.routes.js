@@ -33,6 +33,28 @@ router.post('/generate/:donationId', requireAuth, requireRole(['DONOR', 'ADMIN']
 
 /**
  * @swagger
+ * /matches/{id}/accept:
+ *   post:
+ *     summary: Recipient accepts a match
+ *     tags: [Matches]
+ *     security:
+ *       - bearerAuth: []
+ */
+router.post('/:id/accept', requireAuth, requireRole('RECIPIENT'), matchController.accept);
+
+/**
+ * @swagger
+ * /matches/{id}/reject:
+ *   post:
+ *     summary: Recipient rejects a match
+ *     tags: [Matches]
+ *     security:
+ *       - bearerAuth: []
+ */
+router.post('/:id/reject', requireAuth, requireRole('RECIPIENT'), matchController.reject);
+
+/**
+ * @swagger
  * /matches/{donationId}:
  *   get:
  *     summary: Get all matches for a donation

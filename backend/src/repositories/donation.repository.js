@@ -76,4 +76,7 @@ const findNearbyRecipients = async (donation, radiusKm) => {
   return results.sort((a, b) => a.distance_km - b.distance_km);
 };
 
-module.exports = { create, findAll, findById, updateStatus, createStatusLog, findNearbyRecipients };
+const addImage = (donationId, imageUrl) =>
+  prisma.donationImage.create({ data: { donationId, imageUrl } });
+
+module.exports = { create, findAll, findById, updateStatus, createStatusLog, findNearbyRecipients, addImage };

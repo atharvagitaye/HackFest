@@ -19,6 +19,20 @@ const DonationWizard = () => {
   // Step 1 fields
   const [foodCategory, setFoodCategory] = useState(categories[0]);
   const [itemName, setItemName] = useState("");
+  const [imageBase64, setImageBase64] = useState<string>("");
+  const [imagePreview, setImagePreview] = useState<string>("");
+
+  const handleImageFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result as string;
+      setImageBase64(result);
+      setImagePreview(result);
+    };
+    reader.readAsDataURL(file);
+  };
 
   // Step 2 fields
   const [quantityKg, setQuantityKg] = useState("");
@@ -47,7 +61,14 @@ const DonationWizard = () => {
         pickupDeadline: pickupDeadline || undefined,
         preparedAt: new Date().toISOString(),
       }),
-    onSuccess: () => {
+    onSuccess: async (donation) => {
+      if (imageBase64 && donation?.id) {
+        try {
+          await donationsApi.addImage(donation.id, imageBase64);
+        } catch {
+          // non-fatal: donation was created, image upload is optional
+        }
+      }
       toast.success("Donation posted successfully!");
       navigate("/donations");
     },
@@ -138,11 +159,23 @@ const DonationWizard = () => {
                 <div className="grid md:grid-cols-2 gap-6">
                   <div>
                     <p className="text-sm font-medium text-foreground mb-2">Food Image</p>
-                    <div className="border-2 border-dashed border-border rounded-xl h-52 flex flex-col items-center justify-center bg-muted/50 cursor-pointer hover:border-primary/50 transition-colors">
-                      <Camera className="w-8 h-8 text-primary mb-2" />
-                      <p className="text-sm font-medium text-foreground">Drag and drop or click</p>
-                      <p className="text-xs text-muted-foreground">PNG, JPG up to 10MB</p>
-                    </div>
+                    <label className="border-2 border-dashed border-border rounded-xl h-52 flex flex-col items-center justify-center bg-muted/50 cursor-pointer hover:border-primary/50 transition-colors overflow-hidden relative">
+                      {imagePreview ? (
+                        <img src={imagePreview} alt="preview" className="w-full h-full object-cover" />
+                      ) : (
+                        <>
+                          <Camera className="w-8 h-8 text-primary mb-2" />
+                          <p className="text-sm font-medium text-foreground">Drag and drop or click</p>
+                          <p className="text-xs text-muted-foreground">PNG, JPG up to 10MB</p>
+                        </>
+                      )}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="absolute inset-0 opacity-0 cursor-pointer"
+                        onChange={handleImageFile}
+                      />
+                    </label>
                   </div>
                   <div className="space-y-4">
                     <div>

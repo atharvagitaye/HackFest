@@ -19,7 +19,11 @@ const createDonationSchema = z.object({
 });
 
 const updateStatusSchema = z.object({
-  status: z.enum(['MATCHED', 'ACCEPTED', 'PICKED_UP', 'DELIVERED']),
+  status: z.enum(['MATCHED', 'ACCEPTED', 'PICKED_UP', 'DELIVERED', 'CANCELLED', 'EXPIRED']),
+});
+
+const addImageSchema = z.object({
+  imageUrl: z.string().min(1),
 });
 
 /**
@@ -152,5 +156,16 @@ router.patch('/:id/status', requireAuth, validate(updateStatusSchema), donationC
  *         description: List of nearby recipients with distance
  */
 router.get('/:id/nearby-recipients', requireAuth, donationController.nearbyRecipients);
+
+/**
+ * @swagger
+ * /donations/{id}/images:
+ *   post:
+ *     summary: Add an image to a donation (base64 URL or remote URL)
+ *     tags: [Donations]
+ *     security:
+ *       - bearerAuth: []
+ */
+router.post('/:id/images', requireAuth, validate(addImageSchema), donationController.addImage);
 
 module.exports = router;

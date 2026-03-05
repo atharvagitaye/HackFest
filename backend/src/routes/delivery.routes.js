@@ -46,6 +46,40 @@ router.post('/start', requireAuth, requireRole('RECIPIENT'), validate(startSchem
 
 /**
  * @swagger
+ * /deliveries:
+ *   get:
+ *     summary: List deliveries for the logged-in recipient
+ *     tags: [Deliveries]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of deliveries
+ */
+router.get('/', requireAuth, deliveryController.list);
+
+/**
+ * @swagger
+ * /deliveries/{id}:
+ *   get:
+ *     summary: Get a specific delivery by ID
+ *     tags: [Deliveries]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Delivery details
+ */
+router.get('/:id', requireAuth, deliveryController.getById);
+
+/**
+ * @swagger
  * /deliveries/complete:
  *   post:
  *     summary: Complete a delivery

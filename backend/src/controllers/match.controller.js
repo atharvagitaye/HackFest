@@ -19,4 +19,22 @@ const listByDonation = async (req, res, next) => {
   }
 };
 
-module.exports = { generate, listByDonation };
+const accept = async (req, res, next) => {
+  try {
+    const result = await matchService.acceptMatch(req.params.id, req.user.id);
+    sendSuccess(res, result, 'Match accepted');
+  } catch (err) {
+    next(err);
+  }
+};
+
+const reject = async (req, res, next) => {
+  try {
+    const result = await matchService.rejectMatch(req.params.id, req.user.id);
+    sendSuccess(res, result, 'Match rejected');
+  } catch (err) {
+    next(err);
+  }
+};
+
+module.exports = { generate, listByDonation, accept, reject };

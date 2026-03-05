@@ -9,6 +9,10 @@ import type {
   Delivery,
   ImpactSummary,
   NearbyRecipient,
+  Rating,
+  SubmitRatingPayload,
+  AdminUser,
+  AdminStats,
 } from '@/types/api';
 
 const BASE = '/api/v1';
@@ -69,6 +73,9 @@ export const donationsApi = {
 
   nearbyRecipients: (id: string) =>
     req<NearbyRecipient[]>('GET', `/donations/${id}/nearby-recipients`),
+
+  addImage: (id: string, imageUrl: string) =>
+    req<{ id: string; imageUrl: string }>('POST', `/donations/${id}/images`, { imageUrl }),
 };
 
 // ─── Matches ──────────────────────────────────────────────────────────────────
@@ -78,6 +85,12 @@ export const matchesApi = {
 
   getByDonation: (donationId: string) =>
     req<Match[]>('GET', `/matches/${donationId}`),
+
+  accept: (matchId: string) =>
+    req<Match>('POST', `/matches/${matchId}/accept`),
+
+  reject: (matchId: string) =>
+    req<Match>('POST', `/matches/${matchId}/reject`),
 };
 
 // ─── Deliveries ───────────────────────────────────────────────────────────────
@@ -87,6 +100,38 @@ export const deliveriesApi = {
 
   complete: (deliveryId: string) =>
     req<Delivery>('POST', '/deliveries/complete', { deliveryId }),
+
+  list: () => req<Delivery[]>('GET', '/deliveries'),
+
+  getById: (id: string) => req<Delivery>('GET', `/deliveries/${id}`),
+};
+
+// ─── Ratings ──────────────────────────────────────────────────────────────────
+export const ratingsApi = {
+  submit: (payload: SubmitRatingPayload) =>
+    req<Rating>('POST', '/ratings', payload),
+
+  getByDonation: (donationId: string) =>
+    req<Rating[]>('GET', `/ratings/${donationId}`),
+};
+
+// ─── Admin ────────────────────────────────────────────────────────────────────
+export const adminApi = {
+  getStats: () => req<AdminStats>('GET', '/admin/stats'),
+  listUsers: (params?: { role?: string; search?: string }) => {
+    const qs = params
+      ? '?' + new URLSearchParams(Object.entries(params).filter(([, v]) => v) as [string, string][]).toString()
+      : '';
+    return req<AdminUser[]>('GET', `/admin/users${qs}`);
+  },
+  verifyUser: (userId: string, verified: boolean) =>
+    req<User>('PATCH', `/admin/users/${userId}/verify`, { verified }),
+  deleteUser: (userId: string) =>
+    req<null>('DELETE', `/admin/users/${userId}`),
+  listDonations: (params?: { status?: string }) => {
+    const qs = params?.status ? `?status=${params.status}` : '';
+    return req<Donation[]>('GET', `/admin/donations${qs}`);
+  },
 };
 
 // ─── Impact ───────────────────────────────────────────────────────────────────

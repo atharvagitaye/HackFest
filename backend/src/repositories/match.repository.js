@@ -10,7 +10,16 @@ const findByDonation = (donationId) =>
     orderBy: { predictedSuccessProbability: 'desc' },
   });
 
+const findById = (id) =>
+  prisma.match.findUnique({
+    where: { id },
+    include: {
+      donation: true,
+      recipient: { select: { id: true, name: true, email: true, trustScore: true } },
+    },
+  });
+
 const markSelected = (id) =>
   prisma.match.update({ where: { id }, data: { selected: true } });
 
-module.exports = { createMany, findByDonation, markSelected };
+module.exports = { createMany, findByDonation, findById, markSelected };

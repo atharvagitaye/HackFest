@@ -82,4 +82,43 @@ const generateMatches = async (donationId) => {
 
 const getMatchesForDonation = (donationId) => matchRepo.findByDonation(donationId);
 
-module.exports = { generateMatches, getMatchesForDonation };
+/**
+ * Recipient accepts a match → marks match selected + advances donation to ACCEPTED.
+ */
+const acceptMatch = async (matchId, recipientId) => {
+  const match = await matchRepo.findById(matchId);
+  if (!match) throw AppError.notFound('Match not found');
+  if (match.recipientId !== recipientId) throw AppError.forbidden('Not your match');
+  if (match.donation.status !== 'MATCHED') {
+    throw AppError.badRequest('Donation is not in MATCHED state');
+  }
+
+  await matchRepo.markSelected(matchId);
+  await donationRepo.updateStatus(match.donationId, 'ACCEPTED');
+  await donationRepo.createStatusLog({
+    donationId: match.donationId,
+    oldStatus: 'MATCHED',
+    newStatus: 'ACCEPTED',
+    changedBy: recipientId,
+  });
+
+  return matchRepo.findById(matchId);
+};
+
+/**
+ * Recipient rejects a match — donation stays MATCHED, match de-selected.
+ */
+const rejectMatch = async (matchId, recipientId) => {
+  const match = await matchRepo.findById(matchId);
+  if (!match) throw AppError.notFound('Match not found');
+  if (match.recipientId !== recipientId) throw AppError.forbidden('Not your match');
+
+  const updated = await require('../config/prisma').match.update({
+    where: { id: matchId },
+    data: { selected: false },
+    include: { recipient: { select: { id: true, name: true, email: true, trustScore: true } } },
+  });
+  return updated;
+};
+
+module.exports = { generateMatches, getMatchesForDonation, acceptMatch, rejectMatch };
