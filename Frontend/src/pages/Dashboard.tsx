@@ -2,11 +2,11 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import StatCard from "@/components/shared/StatCard";
 import MapWidget from "@/components/shared/MapWidget";
-import { activityFeed, mapMarkers } from "@/data/mockData";
+import { activityFeed } from "@/data/mockData";
 import { Button } from "@/components/ui/button";
 import { Plus, FileText, Truck } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { impactApi } from "@/lib/api";
+import { impactApi, donationsApi } from "@/lib/api";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -17,6 +17,22 @@ const Dashboard = () => {
     queryKey: ["impact-summary"],
     queryFn: impactApi.summary,
   });
+
+  const { data: donations = [] } = useQuery({
+    queryKey: ["donations"],
+    queryFn: donationsApi.list,
+  });
+
+  const liveMarkers = (donations as any[])
+    .filter((d: any) => d.latitude && d.longitude && d.status !== "CANCELLED" && d.status !== "EXPIRED")
+    .map((d: any, i: number) => ({
+      id: i,
+      type: "donation",
+      name: d.foodCategory ?? "Donation",
+      lat: d.latitude,
+      lng: d.longitude,
+      status: d.status,
+    }));
 
   const stats = [
     {
@@ -88,7 +104,7 @@ const Dashboard = () => {
                 <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-info" /> NGO</span>
               </div>
             </div>
-            <MapWidget markers={mapMarkers} />
+            <MapWidget markers={liveMarkers} />
             <div className="mt-3 card-elevated p-3 flex items-center gap-3">
               <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
                 <Truck className="w-4 h-4 text-primary" />

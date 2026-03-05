@@ -79,6 +79,8 @@ export const organizationProfile = {
   totalMeals: "1.2M+",
   wasteRedirected: "450 Tons",
   activePartners: "84",
+  latitude: 47.6062,
+  longitude: -122.3321,
 };
 
 export const mapMarkers = [

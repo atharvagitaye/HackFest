@@ -1,7 +1,43 @@
-import { Truck, UtensilsCrossed, Home, Plus, Minus } from "lucide-react";
-import mapPreview from "@/assets/map-preview.jpg";
+import { useEffect, useRef } from "react";
+import L from "leaflet";
+import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 
-interface Marker {
+// Fix broken default marker icons in Vite/webpack builds
+import markerIconUrl from "leaflet/dist/images/marker-icon.png";
+import markerIcon2xUrl from "leaflet/dist/images/marker-icon-2x.png";
+import markerShadowUrl from "leaflet/dist/images/marker-shadow.png";
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconUrl: markerIconUrl,
+  iconRetinaUrl: markerIcon2xUrl,
+  shadowUrl: markerShadowUrl,
+});
+
+const MARKER_COLORS: Record<string, string> = {
+  donation: "#f59e0b",
+  ngo:      "#22c55e",
+  truck:    "#3b82f6",
+};
+
+function makeIcon(color: string) {
+  return L.divIcon({
+    className: "",
+    html: `
+      <div style="
+        width:28px;height:28px;border-radius:50% 50% 50% 0;
+        background:${color};border:2px solid #fff;
+        box-shadow:0 2px 6px rgba(0,0,0,0.35);
+        transform:rotate(-45deg);
+      "></div>`,
+    iconSize: [28, 28],
+    iconAnchor: [14, 28],
+    popupAnchor: [0, -30],
+  });
+}
+
+export interface Marker {
   id: number;
   type: string;
   name: string;
@@ -17,41 +53,59 @@ interface MapWidgetProps {
   fullScreen?: boolean;
 }
 
-const markerIcons: Record<string, { icon: React.ElementType; bg: string }> = {
-  donation: { icon: UtensilsCrossed, bg: "bg-warning" },
-  ngo: { icon: Home, bg: "bg-primary" },
-  truck: { icon: Truck, bg: "bg-primary" },
-};
+// Recenter map when markers change
+function Recenter({ center }: { center: [number, number] }) {
+  const map = useMap();
+  useEffect(() => { map.setView(center, map.getZoom()); }, [center, map]);
+  return null;
+}
+
+// Default center: New York City (matches seed data)
+const NYC: [number, number] = [40.73, -73.93];
 
 const MapWidget = ({ markers = [], className = "", onMarkerClick, fullScreen }: MapWidgetProps) => {
-  return (
-    <div className={`relative overflow-hidden rounded-xl ${fullScreen ? "h-full" : "h-80"} ${className}`}>
-      <img src={mapPreview} alt="Map" className="w-full h-full object-cover" />
-      <div className="absolute inset-0 bg-foreground/5" />
-      
-      {markers.map((marker) => {
-        const config = markerIcons[marker.type] || markerIcons.donation;
-        const Icon = config.icon;
-        return (
-          <button
-            key={marker.id}
-            onClick={() => onMarkerClick?.(marker)}
-            className={`absolute ${config.bg} p-2 rounded-full shadow-lg transition-transform hover:scale-110 cursor-pointer`}
-            style={{ left: `${marker.lng}%`, top: `${marker.lat}%`, transform: "translate(-50%, -50%)" }}
-          >
-            <Icon className="w-4 h-4 text-primary-foreground" />
-          </button>
-        );
-      })}
+  const validMarkers = markers.filter((m) => m.lat !== 0 || m.lng !== 0);
 
-      <div className="absolute bottom-4 right-4 flex flex-col gap-1">
-        <button className="w-8 h-8 bg-card rounded-lg shadow-md flex items-center justify-center hover:bg-muted transition-colors">
-          <Plus className="w-4 h-4 text-foreground" />
-        </button>
-        <button className="w-8 h-8 bg-card rounded-lg shadow-md flex items-center justify-center hover:bg-muted transition-colors">
-          <Minus className="w-4 h-4 text-foreground" />
-        </button>
-      </div>
+  // Auto-center on the first valid marker, otherwise NYC
+  const center: [number, number] =
+    validMarkers.length > 0
+      ? [validMarkers[0].lat, validMarkers[0].lng]
+      : NYC;
+
+  return (
+    <div className={`overflow-hidden rounded-xl ${fullScreen ? "h-full" : "h-80"} ${className}`}>
+      <MapContainer
+        center={center}
+        zoom={13}
+        style={{ height: "100%", width: "100%" }}
+        scrollWheelZoom={true}
+      >
+        <TileLayer
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        />
+        <Recenter center={center} />
+        {validMarkers.map((marker) => {
+          const color = MARKER_COLORS[marker.type] ?? MARKER_COLORS.donation;
+          return (
+            <Marker
+              key={marker.id}
+              position={[marker.lat, marker.lng]}
+              icon={makeIcon(color)}
+              eventHandlers={{ click: () => onMarkerClick?.(marker) }}
+            >
+              <Popup>
+                <div className="text-sm">
+                  <p className="font-semibold">{marker.name}</p>
+                  {marker.status && (
+                    <p className="text-xs text-gray-500 uppercase">{marker.status}</p>
+                  )}
+                </div>
+              </Popup>
+            </Marker>
+          );
+        })}
+      </MapContainer>
     </div>
   );
 };

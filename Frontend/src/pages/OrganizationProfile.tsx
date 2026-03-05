@@ -135,7 +135,9 @@ const OrganizationProfile = () => {
             {/* Map */}
             <div className="card-elevated p-5">
               <h3 className="font-semibold text-foreground mb-3">Location Map</h3>
-              <MapWidget markers={[{ id: 1, type: "ngo", name: org.name, lat: 50, lng: 50, status: "active" }]} />
+              <MapWidget markers={org.latitude && org.longitude
+                ? [{ id: 1, type: "ngo", name: org.name, lat: org.latitude, lng: org.longitude, status: "active" }]
+                : []} />
             </div>
 
             {/* Stats */}

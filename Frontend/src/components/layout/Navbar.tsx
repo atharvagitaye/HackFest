@@ -10,18 +10,18 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/contexts/AuthContext";
 
-const navItems = [
-  { label: "Dashboard", path: "/dashboard" },
-  { label: "Donations", path: "/donations" },
-  { label: "Matches", path: "/matches" },
-  { label: "Live Map", path: "/live-map" },
-  { label: "Impact", path: "/impact" },
-];
-
 const Navbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+
+  const navItems = [
+    { label: "Dashboard", path: user?.role === "ADMIN" ? "/admin" : "/dashboard" },
+    { label: "Donations", path: "/donations" },
+    { label: "Matches", path: "/matches" },
+    { label: "Live Map", path: "/live-map" },
+    { label: "Impact", path: "/impact" },
+  ];
 
   const initials = user
     ? user.name.split(" ").slice(0, 2).map((w) => w[0]).join("").toUpperCase()
