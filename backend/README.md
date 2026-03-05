@@ -54,7 +54,35 @@ Swagger docs at **http://localhost:3000/api-docs**
 
 ---
 
-## 📁 Project Structure
+## � Test Accounts
+
+After running `npm run db:seed`, the following test accounts are available (all with password: **`Password123!`**):
+
+### Admin
+
+| Email | Role |
+|-------|------|
+| `admin@foodplatform.com` | ADMIN |
+
+### Donors
+
+| Email | Organization | Role |
+|-------|--------------|------|
+| `donor@greenleaf.com` | Green Leaf Restaurant | DONOR |
+| `donor@citycatering.com` | City Catering Co. | DONOR |
+
+### Recipients
+
+| Email | Organization | Role |
+|-------|--------------|------|
+| `recipient@hopeshelter.org` | Hope Shelter NGO | RECIPIENT |
+| `recipient@foodbank.org` | Community Food Bank | RECIPIENT |
+
+Each user is associated with a mock organization linked via `organizationId`.
+
+---
+
+## �📁 Project Structure
 
 ```
 backend/

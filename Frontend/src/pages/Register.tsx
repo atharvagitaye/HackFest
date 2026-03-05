@@ -6,10 +6,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/components/ui/sonner";
+import { useAuth } from "@/contexts/AuthContext";
+import { authApi } from "@/lib/api";
 import communityKitchen from "@/assets/community-kitchen.jpg";
 
 const Register = () => {
   const navigate = useNavigate();
+  const { setAuth } = useAuth();
   const [form, setForm] = useState({
     orgName: "",
     email: "",
@@ -44,10 +47,27 @@ const Register = () => {
     e.preventDefault();
     if (!validate()) return;
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 1400));
-    setLoading(false);
-    toast.success("Account created! Welcome to SurplusSync.");
-    navigate("/role-select");
+    try {
+      const roleMap: Record<string, 'DONOR' | 'RECIPIENT' | 'ADMIN'> = {
+        donor: 'DONOR',
+        recipient: 'RECIPIENT',
+        admin: 'ADMIN',
+      };
+      const { token, user } = await authApi.register({
+        name: form.orgName,
+        email: form.email,
+        password: form.password,
+        role: roleMap[form.role] ?? 'DONOR',
+        phone: form.phone || undefined,
+      });
+      setAuth(token, user);
+      toast.success('Account created! Welcome to SurplusSync.');
+      navigate('/dashboard');
+    } catch (err: any) {
+      toast.error(err.message || 'Registration failed');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const fieldError = (key: string) =>

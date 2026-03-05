@@ -1,6 +1,8 @@
+import { useQuery } from "@tanstack/react-query";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
-import { impactStats, chartData, communityStories } from "@/data/mockData";
+import { chartData, communityStories } from "@/data/mockData";
+import { impactApi } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Calendar, TrendingUp, Utensils, CloudOff, Recycle } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
@@ -12,6 +14,32 @@ const iconMap: Record<string, React.ElementType> = { Utensils, CloudOff, Recycle
 const storyImages = [communityVolunteers, foodProduce, communityKitchen];
 
 const ImpactAnalytics = () => {
+  const { data: impact } = useQuery({
+    queryKey: ["impact-summary"],
+    queryFn: impactApi.summary,
+  });
+
+  const impactStats = [
+    {
+      label: "MEALS SERVED",
+      value: impact ? impact.estimatedMealsSaved.toLocaleString() : "—",
+      change: "+12%",
+      icon: "Utensils",
+    },
+    {
+      label: "CO2 PREVENTED",
+      value: impact ? `${impact.estimatedCo2Reduced.toLocaleString()} kg` : "—",
+      change: "+8.4%",
+      icon: "CloudOff",
+    },
+    {
+      label: "FOOD DIVERTED",
+      value: impact ? `${impact.totalKgSaved.toLocaleString()} kg` : "—",
+      change: "+15%",
+      icon: "Recycle",
+    },
+  ];
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />

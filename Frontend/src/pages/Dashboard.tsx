@@ -2,11 +2,53 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import StatCard from "@/components/shared/StatCard";
 import MapWidget from "@/components/shared/MapWidget";
-import { dashboardStats, activityFeed, mapMarkers } from "@/data/mockData";
+import { activityFeed, mapMarkers } from "@/data/mockData";
 import { Button } from "@/components/ui/button";
 import { Plus, FileText, Truck } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { impactApi } from "@/lib/api";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Dashboard = () => {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const { data: impact } = useQuery({
+    queryKey: ["impact-summary"],
+    queryFn: impactApi.summary,
+  });
+
+  const stats = [
+    {
+      label: "Total KG Saved",
+      value: impact ? `${impact.totalKgSaved.toLocaleString()} kg` : "—",
+      icon: "Package",
+      change: "DELIVERED",
+      positive: true,
+    },
+    {
+      label: "Meals Saved",
+      value: impact ? impact.estimatedMealsSaved.toLocaleString() : "—",
+      icon: "Handshake",
+      change: "÷ 0.5 kg/meal",
+      positive: true,
+    },
+    {
+      label: "CO₂ Reduced",
+      value: impact ? `${impact.estimatedCo2Reduced.toLocaleString()} kg` : "—",
+      icon: "Leaf",
+      change: "× 2.5 factor",
+      positive: true,
+    },
+    {
+      label: "Deliveries",
+      value: impact ? impact.totalSuccessfulDeliveries.toString() : "—",
+      icon: "Clock",
+      change: "Completed",
+      positive: true,
+    },
+  ];
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -14,17 +56,21 @@ const Dashboard = () => {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-2xl font-bold text-foreground">Command Center</h1>
-            <p className="text-muted-foreground text-sm">Real-time monitoring of food redistribution cycles.</p>
+            <p className="text-muted-foreground text-sm">
+              Welcome back, <span className="font-medium text-foreground">{user?.name}</span> · Real-time monitoring of food redistribution cycles.
+            </p>
           </div>
           <div className="flex gap-3">
             <Button variant="outline"><FileText className="w-4 h-4 mr-2" />Export Report</Button>
-            <Button><Plus className="w-4 h-4 mr-2" />New Donation</Button>
+            {user?.role === "DONOR" && (
+              <Button onClick={() => navigate("/donate")}><Plus className="w-4 h-4 mr-2" />New Donation</Button>
+            )}
           </div>
         </div>
 
         {/* Stats */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          {dashboardStats.map((stat) => (
+          {stats.map((stat) => (
             <StatCard key={stat.label} {...stat} />
           ))}
         </div>

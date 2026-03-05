@@ -2,7 +2,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import Landing from "./pages/Landing";
 import Dashboard from "./pages/Dashboard";
 import DonationsFeed from "./pages/DonationsFeed";
@@ -15,11 +16,25 @@ import DonationWizard from "./pages/DonationWizard";
 import DonationReview from "./pages/DonationReview";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
-import RoleSelect from "./pages/RoleSelect";
 import AdminDashboard from "./pages/AdminDashboard";
 import NotFound from "./pages/NotFound";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: { queries: { retry: 1, staleTime: 30_000 } },
+});
+
+const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+  const { user, isLoading } = useAuth();
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+  if (!user) return <Navigate to="/login" replace />;
+  return <>{children}</>;
+};
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -28,20 +43,23 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
+          {/* Public */}
           <Route path="/" element={<Landing />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/admin" element={<AdminDashboard />} />
-          <Route path="/donations" element={<DonationsFeed />} />
-          <Route path="/matches" element={<AIMatching />} />
-          <Route path="/live-map" element={<LiveMap />} />
-          <Route path="/delivery/:id" element={<DeliveryTracking />} />
-          <Route path="/impact" element={<ImpactAnalytics />} />
-          <Route path="/organization" element={<OrganizationProfile />} />
-          <Route path="/donate" element={<DonationWizard />} />
-          <Route path="/review" element={<DonationReview />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/role-select" element={<RoleSelect />} />
+
+          {/* Protected */}
+          <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+          <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
+          <Route path="/donations" element={<ProtectedRoute><DonationsFeed /></ProtectedRoute>} />
+          <Route path="/matches" element={<ProtectedRoute><AIMatching /></ProtectedRoute>} />
+          <Route path="/live-map" element={<ProtectedRoute><LiveMap /></ProtectedRoute>} />
+          <Route path="/delivery/:id" element={<ProtectedRoute><DeliveryTracking /></ProtectedRoute>} />
+          <Route path="/impact" element={<ProtectedRoute><ImpactAnalytics /></ProtectedRoute>} />
+          <Route path="/organization" element={<ProtectedRoute><OrganizationProfile /></ProtectedRoute>} />
+          <Route path="/donate" element={<ProtectedRoute><DonationWizard /></ProtectedRoute>} />
+          <Route path="/review" element={<ProtectedRoute><DonationReview /></ProtectedRoute>} />
+
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

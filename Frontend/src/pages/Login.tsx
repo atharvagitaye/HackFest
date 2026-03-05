@@ -5,10 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/components/ui/sonner";
+import { useAuth } from "@/contexts/AuthContext";
+import { authApi } from "@/lib/api";
 import communityVolunteers from "@/assets/community-volunteers.jpg";
 
 const Login = () => {
   const navigate = useNavigate();
+  const { setAuth } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -29,10 +32,16 @@ const Login = () => {
     e.preventDefault();
     if (!validate()) return;
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 1200));
-    setLoading(false);
-    toast.success("Logged in successfully!");
-    navigate("/role-select");
+    try {
+      const { token, user } = await authApi.login(email, password);
+      setAuth(token, user);
+      toast.success(`Welcome back, ${user.name}!`);
+      navigate(user.role === 'ADMIN' ? '/admin' : '/dashboard');
+    } catch (err: any) {
+      toast.error(err.message || 'Login failed');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

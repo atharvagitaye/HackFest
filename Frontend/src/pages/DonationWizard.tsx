@@ -1,19 +1,69 @@
 import { useState } from "react";
+import { useMutation } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
-import { Camera, Sparkles, ArrowRight, Lock } from "lucide-react";
+import { Camera, Sparkles, ArrowRight, ArrowLeft, Lock, CheckCircle } from "lucide-react";
+import { donationsApi } from "@/lib/api";
+import { useAuth } from "@/contexts/AuthContext";
 
 const categories = ["Bakery", "Prepared Meals", "Produce", "Dairy", "Protein"];
 
-const steps = [
-  { num: 1, title: "Photo & Name", desc: "Current Step" },
-  { num: 2, title: "Details & Quantity", desc: "Incomplete" },
-  { num: 3, title: "Expiry & Urgency", desc: "Incomplete" },
-];
-
 const DonationWizard = () => {
-  const [currentStep] = useState(1);
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const [currentStep, setCurrentStep] = useState(1);
+
+  // Step 1 fields
+  const [foodCategory, setFoodCategory] = useState(categories[0]);
+  const [itemName, setItemName] = useState("");
+
+  // Step 2 fields
+  const [quantityKg, setQuantityKg] = useState("");
+  const [estimatedMeals, setEstimatedMeals] = useState("");
+
+  // Step 3 fields
+  const [expiryTime, setExpiryTime] = useState("");
+  const [pickupDeadline, setPickupDeadline] = useState("");
+
+  const progressPct = Math.round(((currentStep - 1) / 2) * 100);
+
+  const steps = [
+    { num: 1, title: "Photo & Name", desc: currentStep === 1 ? "Current Step" : currentStep > 1 ? "Complete" : "Incomplete" },
+    { num: 2, title: "Details & Quantity", desc: currentStep === 2 ? "Current Step" : currentStep > 2 ? "Complete" : "Incomplete" },
+    { num: 3, title: "Expiry & Urgency", desc: currentStep === 3 ? "Current Step" : "Incomplete" },
+  ];
+
+  const createMutation = useMutation({
+    mutationFn: () =>
+      donationsApi.create({
+        organizationId: user?.organizationId ?? "",
+        foodCategory: itemName || foodCategory,
+        quantityKg: quantityKg ? parseFloat(quantityKg) : undefined,
+        estimatedMeals: estimatedMeals ? parseInt(estimatedMeals) : undefined,
+        expiryTime: expiryTime || undefined,
+        pickupDeadline: pickupDeadline || undefined,
+        preparedAt: new Date().toISOString(),
+      }),
+    onSuccess: () => {
+      toast.success("Donation posted successfully!");
+      navigate("/donations");
+    },
+    onError: (err: Error) => {
+      toast.error(err.message ?? "Failed to post donation");
+    },
+  });
+
+  const handleNext = () => {
+    if (currentStep === 1 && !foodCategory) {
+      toast.error("Please select a category.");
+      return;
+    }
+    if (currentStep < 3) setCurrentStep((s) => s + 1);
+    else createMutation.mutate();
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -28,8 +78,14 @@ const DonationWizard = () => {
                 {steps.map((step) => (
                   <div key={step.num} className="flex items-start gap-3">
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold flex-shrink-0 ${
-                      step.num === currentStep ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
-                    }`}>{step.num}</div>
+                      step.num === currentStep
+                        ? "bg-primary text-primary-foreground"
+                        : step.num < currentStep
+                          ? "bg-success text-success-foreground"
+                          : "bg-muted text-muted-foreground"
+                    }`}>
+                      {step.num < currentStep ? <CheckCircle className="w-4 h-4" /> : step.num}
+                    </div>
                     <div>
                       <p className={`text-sm font-medium ${step.num === currentStep ? "text-foreground" : "text-muted-foreground"}`}>{step.title}</p>
                       <p className={`text-xs ${step.num === currentStep ? "text-primary" : "text-muted-foreground"}`}>{step.desc}</p>
@@ -40,10 +96,10 @@ const DonationWizard = () => {
               <div className="mt-5">
                 <div className="flex items-center justify-between mb-1">
                   <p className="text-xs text-foreground">Overall Progress</p>
-                  <p className="text-xs font-semibold text-primary">33%</p>
+                  <p className="text-xs font-semibold text-primary">{progressPct}%</p>
                 </div>
                 <div className="w-full bg-muted rounded-full h-2">
-                  <div className="bg-primary h-2 rounded-full" style={{ width: "33%" }} />
+                  <div className="bg-primary h-2 rounded-full transition-all duration-300" style={{ width: `${progressPct}%` }} />
                 </div>
               </div>
             </div>
@@ -56,11 +112,11 @@ const DonationWizard = () => {
               <div className="space-y-3">
                 <div className="bg-card rounded-lg p-3">
                   <p className="text-[10px] text-muted-foreground uppercase">PREDICTED CATEGORY</p>
-                  <p className="text-sm text-muted-foreground italic">Waiting for image...</p>
+                  <p className="text-sm text-muted-foreground italic">{foodCategory || "Waiting for selection..."}</p>
                 </div>
                 <div className="bg-card rounded-lg p-3">
                   <p className="text-[10px] text-muted-foreground uppercase">SUGGESTED SHELF-LIFE</p>
-                  <p className="text-sm text-muted-foreground italic">Waiting for image...</p>
+                  <p className="text-sm text-muted-foreground italic">{expiryTime ? new Date(expiryTime).toLocaleString() : "Waiting for input..."}</p>
                 </div>
               </div>
             </div>
@@ -74,60 +130,145 @@ const DonationWizard = () => {
             </div>
 
             {/* Step 1 */}
-            <div className="card-elevated p-6">
-              <h2 className="text-lg font-semibold text-foreground mb-1">Step 1: Photo & Name</h2>
-              <p className="text-sm text-muted-foreground mb-5">Provide a clear picture and title for your donation.</p>
+            {currentStep === 1 && (
+              <div className="card-elevated p-6">
+                <h2 className="text-lg font-semibold text-foreground mb-1">Step 1: Photo & Name</h2>
+                <p className="text-sm text-muted-foreground mb-5">Provide a clear picture and title for your donation.</p>
 
-              <div className="grid md:grid-cols-2 gap-6">
-                <div>
-                  <p className="text-sm font-medium text-foreground mb-2">Food Image</p>
-                  <div className="border-2 border-dashed border-border rounded-xl h-52 flex flex-col items-center justify-center bg-muted/50 cursor-pointer hover:border-primary/50 transition-colors">
-                    <Camera className="w-8 h-8 text-primary mb-2" />
-                    <p className="text-sm font-medium text-foreground">Drag and drop or click</p>
-                    <p className="text-xs text-muted-foreground">PNG, JPG up to 10MB</p>
-                  </div>
-                </div>
-                <div className="space-y-4">
+                <div className="grid md:grid-cols-2 gap-6">
                   <div>
-                    <p className="text-sm font-medium text-foreground mb-2">Item Name</p>
-                    <input
-                      placeholder="e.g. Artisanal Sourdough Batards"
-                      className="w-full bg-muted rounded-lg px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-primary/30"
-                    />
+                    <p className="text-sm font-medium text-foreground mb-2">Food Image</p>
+                    <div className="border-2 border-dashed border-border rounded-xl h-52 flex flex-col items-center justify-center bg-muted/50 cursor-pointer hover:border-primary/50 transition-colors">
+                      <Camera className="w-8 h-8 text-primary mb-2" />
+                      <p className="text-sm font-medium text-foreground">Drag and drop or click</p>
+                      <p className="text-xs text-muted-foreground">PNG, JPG up to 10MB</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm font-medium text-foreground mb-2">Category Quick-Select</p>
-                    <div className="flex flex-wrap gap-2">
-                      {categories.map((cat, i) => (
-                        <button key={cat} className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                          i === 0 ? "bg-primary text-primary-foreground" : "bg-card border border-border text-foreground hover:bg-muted"
-                        }`}>{cat}</button>
-                      ))}
+                  <div className="space-y-4">
+                    <div>
+                      <p className="text-sm font-medium text-foreground mb-2">Item Name</p>
+                      <input
+                        value={itemName}
+                        onChange={(e) => setItemName(e.target.value)}
+                        placeholder="e.g. Artisanal Sourdough Batards"
+                        className="w-full bg-muted rounded-lg px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-primary/30"
+                      />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-foreground mb-2">Category Quick-Select</p>
+                      <div className="flex flex-wrap gap-2">
+                        {categories.map((cat) => (
+                          <button
+                            key={cat}
+                            onClick={() => setFoodCategory(cat)}
+                            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                              cat === foodCategory ? "bg-primary text-primary-foreground" : "bg-card border border-border text-foreground hover:bg-muted"
+                            }`}
+                          >
+                            {cat}
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
+            )}
 
-            {/* Step 2 (locked) */}
-            <div className="card-elevated p-6 opacity-50">
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-muted-foreground">Step 2: Details & Quantity</h2>
-                <Lock className="w-5 h-5 text-muted-foreground" />
-              </div>
-            </div>
+            {/* Step 2 */}
+            {currentStep === 2 && (
+              <div className="card-elevated p-6">
+                <h2 className="text-lg font-semibold text-foreground mb-1">Step 2: Details & Quantity</h2>
+                <p className="text-sm text-muted-foreground mb-5">How much food are you donating?</p>
 
-            {/* Step 3 (locked) */}
-            <div className="card-elevated p-6 opacity-50">
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-muted-foreground">Step 3: Expiry & Urgency</h2>
-                <Lock className="w-5 h-5 text-muted-foreground" />
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div>
+                    <p className="text-sm font-medium text-foreground mb-2">Quantity (kg)</p>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.1"
+                      value={quantityKg}
+                      onChange={(e) => setQuantityKg(e.target.value)}
+                      placeholder="e.g. 12.5"
+                      className="w-full bg-muted rounded-lg px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-primary/30"
+                    />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-foreground mb-2">Estimated Meals</p>
+                    <input
+                      type="number"
+                      min="0"
+                      value={estimatedMeals}
+                      onChange={(e) => setEstimatedMeals(e.target.value)}
+                      placeholder="e.g. 25"
+                      className="w-full bg-muted rounded-lg px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-primary/30"
+                    />
+                  </div>
+                </div>
               </div>
-            </div>
+            )}
+
+            {/* Step 3 */}
+            {currentStep === 3 && (
+              <div className="card-elevated p-6">
+                <h2 className="text-lg font-semibold text-foreground mb-1">Step 3: Expiry & Urgency</h2>
+                <p className="text-sm text-muted-foreground mb-5">When does this food expire and when must it be picked up?</p>
+
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div>
+                    <p className="text-sm font-medium text-foreground mb-2">Expiry Date & Time</p>
+                    <input
+                      type="datetime-local"
+                      value={expiryTime}
+                      onChange={(e) => setExpiryTime(e.target.value)}
+                      className="w-full bg-muted rounded-lg px-4 py-2.5 text-sm text-foreground outline-none focus:ring-2 focus:ring-primary/30"
+                    />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-foreground mb-2">Pickup Deadline</p>
+                    <input
+                      type="datetime-local"
+                      value={pickupDeadline}
+                      onChange={(e) => setPickupDeadline(e.target.value)}
+                      className="w-full bg-muted rounded-lg px-4 py-2.5 text-sm text-foreground outline-none focus:ring-2 focus:ring-primary/30"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Locked steps */}
+            {currentStep < 2 && (
+              <div className="card-elevated p-6 opacity-50">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-lg font-semibold text-muted-foreground">Step 2: Details & Quantity</h2>
+                  <Lock className="w-5 h-5 text-muted-foreground" />
+                </div>
+              </div>
+            )}
+            {currentStep < 3 && (
+              <div className="card-elevated p-6 opacity-50">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-lg font-semibold text-muted-foreground">Step 3: Expiry & Urgency</h2>
+                  <Lock className="w-5 h-5 text-muted-foreground" />
+                </div>
+              </div>
+            )}
 
             <div className="flex items-center justify-between">
-              <Button variant="ghost" className="text-muted-foreground">Save as Draft</Button>
-              <Button size="lg">Next Step <ArrowRight className="w-4 h-4 ml-2" /></Button>
+              {currentStep > 1 ? (
+                <Button variant="ghost" onClick={() => setCurrentStep((s) => s - 1)}>
+                  <ArrowLeft className="w-4 h-4 mr-2" />Back
+                </Button>
+              ) : (
+                <Button variant="ghost" className="text-muted-foreground">Save as Draft</Button>
+              )}
+              <Button size="lg" onClick={handleNext} disabled={createMutation.isPending}>
+                {currentStep === 3
+                  ? createMutation.isPending ? "Posting..." : "Post Donation"
+                  : <>Next Step <ArrowRight className="w-4 h-4 ml-2" /></>}
+              </Button>
             </div>
           </div>
         </div>
