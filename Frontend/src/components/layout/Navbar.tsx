@@ -18,7 +18,9 @@ const Navbar = () => {
   const navItems = [
     { label: "Dashboard", path: user?.role === "ADMIN" ? "/admin" : "/dashboard" },
     { label: "Donations", path: "/donations" },
-    { label: "Matches", path: user?.role === "RECIPIENT" ? "/my-matches" : "/matches" },
+    ...(user?.role !== "DONOR"
+      ? [{ label: "Matches", path: user?.role === "RECIPIENT" ? "/my-matches" : "/matches" }]
+      : []),
     { label: "Live Map", path: "/live-map" },
     { label: "Impact", path: "/impact" },
   ];

@@ -6,7 +6,7 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { matchesApi, deliveriesApi } from "@/lib/api";
-import { Match } from "@/types/api";
+import { Match, Delivery } from "@/types/api";
 import {
   Handshake, Check, X, Truck, Package, MapPin,
   Clock, CheckCircle, Star, AlertCircle, Timer
@@ -53,6 +53,16 @@ const RecipientMatches = () => {
     queryKey: ["my-matches"],
     queryFn: () => matchesApi.getMyMatches(),
   });
+
+  const { data: myDeliveries = [] } = useQuery<Delivery[]>({
+    queryKey: ["deliveries"],
+    queryFn: deliveriesApi.list,
+  });
+
+  // Build donationId → deliveryId map for quick lookup
+  const deliveryIdByDonation = Object.fromEntries(
+    (myDeliveries as Delivery[]).map((d) => [d.donationId, d.id])
+  );
 
   const acceptMutation = useMutation({
     mutationFn: (matchId: string) => matchesApi.accept(matchId),
@@ -263,15 +273,18 @@ const RecipientMatches = () => {
                         </Button>
                       )}
 
-                      {status === "PICKED_UP" && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => navigate("/delivery")}
-                        >
-                          <Truck className="w-4 h-4 mr-1" /> Track & Complete
-                        </Button>
-                      )}
+                      {status === "PICKED_UP" && (() => {
+                        const deliveryId = m.donation ? deliveryIdByDonation[m.donation.id] : undefined;
+                        return (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => deliveryId ? navigate(`/delivery/${deliveryId}`) : navigate("/delivery")}
+                          >
+                            <Truck className="w-4 h-4 mr-1" /> Track & Complete
+                          </Button>
+                        );
+                      })()}
 
                       {status === "DELIVERED" && (
                         <span className="flex items-center gap-1.5 text-sm text-green-600 font-medium">

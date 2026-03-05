@@ -6,7 +6,7 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import StatusBadge from "@/components/shared/StatusBadge";
 import { donationsApi, matchesApi, deliveriesApi } from "@/lib/api";
-import { Donation, Match } from "@/types/api";
+import { Donation, Match, Delivery } from "@/types/api";
 import { Button } from "@/components/ui/button";
 import { Plus, Package, MapPin, X, Check, Truck, ClipboardList } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -69,6 +69,17 @@ const DonationsFeed = () => {
     queryFn: () => matchesApi.getMyMatches(),
     enabled: user?.role === "RECIPIENT",
   });
+
+  const { data: myDeliveries = [] } = useQuery<Delivery[]>({
+    queryKey: ["deliveries"],
+    queryFn: deliveriesApi.list,
+    enabled: user?.role === "RECIPIENT",
+  });
+
+  // Build donationId → deliveryId map
+  const deliveryIdByDonation = Object.fromEntries(
+    (myDeliveries as Delivery[]).map((d) => [d.donationId, d.id])
+  );
 
   const acceptMatchMutation = useMutation({
     mutationFn: (matchId: string) => matchesApi.accept(matchId),
@@ -229,7 +240,10 @@ const DonationsFeed = () => {
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => navigate("/delivery")}
+                        onClick={() => {
+                          const deliveryId = m.donation ? deliveryIdByDonation[m.donation.id] : undefined;
+                          navigate(deliveryId ? `/delivery/${deliveryId}` : "/delivery");
+                        }}
                       >
                         <Truck className="w-3 h-3 mr-1" />Track Delivery
                       </Button>

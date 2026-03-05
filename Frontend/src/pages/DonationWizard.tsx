@@ -67,7 +67,7 @@ const DonationWizard = () => {
 
   const steps = [
     { num: 1, title: "Photo & Name", desc: currentStep === 1 ? "Current Step" : currentStep > 1 ? "Complete" : "Incomplete" },
-    { num: 2, title: "Details & Quantity", desc: currentStep === 2 ? "Current Step" : currentStep > 2 ? "Complete" : "Incomplete" },
+    { num: 2, title: "Location & Meals", desc: currentStep === 2 ? "Current Step" : currentStep > 2 ? "Complete" : "Incomplete" },
     { num: 3, title: "Expiry & Urgency", desc: currentStep === 3 ? "Current Step" : "Incomplete" },
   ];
 
@@ -211,6 +211,18 @@ const DonationWizard = () => {
                       />
                     </div>
                     <div>
+                      <p className="text-sm font-medium text-foreground mb-2">Quantity (kg)</p>
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.1"
+                        value={quantityKg}
+                        onChange={(e) => setQuantityKg(e.target.value)}
+                        placeholder="e.g. 12.5"
+                        className="w-full bg-muted rounded-lg px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-primary/30"
+                      />
+                    </div>
+                    <div>
                       <p className="text-sm font-medium text-foreground mb-2">Category Quick-Select</p>
                       <div className="flex flex-wrap gap-2">
                         {categories.map((cat) => (
@@ -234,22 +246,10 @@ const DonationWizard = () => {
             {/* Step 2 */}
             {currentStep === 2 && (
               <div className="card-elevated p-6">
-                <h2 className="text-lg font-semibold text-foreground mb-1">Step 2: Details & Quantity</h2>
-                <p className="text-sm text-muted-foreground mb-5">How much food are you donating?</p>
+                <h2 className="text-lg font-semibold text-foreground mb-1">Step 2: Location & Meals</h2>
+                <p className="text-sm text-muted-foreground mb-5">Where can recipients pick up the donation?</p>
 
                 <div className="grid md:grid-cols-2 gap-6">
-                  <div>
-                    <p className="text-sm font-medium text-foreground mb-2">Quantity (kg)</p>
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.1"
-                      value={quantityKg}
-                      onChange={(e) => setQuantityKg(e.target.value)}
-                      placeholder="e.g. 12.5"
-                      className="w-full bg-muted rounded-lg px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-primary/30"
-                    />
-                  </div>
                   <div>
                     <p className="text-sm font-medium text-foreground mb-2">Estimated Meals</p>
                     <input
@@ -343,7 +343,7 @@ const DonationWizard = () => {
             {currentStep < 2 && (
               <div className="card-elevated p-6 opacity-50">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-lg font-semibold text-muted-foreground">Step 2: Details & Quantity</h2>
+                  <h2 className="text-lg font-semibold text-muted-foreground">Step 2: Location & Meals</h2>
                   <Lock className="w-5 h-5 text-muted-foreground" />
                 </div>
               </div>
