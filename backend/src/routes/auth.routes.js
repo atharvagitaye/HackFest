@@ -13,6 +13,10 @@ const registerSchema = z.object({
   role: z.enum(['DONOR', 'RECIPIENT', 'ADMIN']),
   phone: z.string().max(20).optional(),
   organizationId: z.string().uuid().optional(),
+  panNumber: z.string().max(20).optional(),
+  panDocumentUrl: z.string().url().optional().or(z.literal('')),
+  fssaiLicense: z.string().max(50).optional(),
+  fssaiDocumentUrl: z.string().url().optional().or(z.literal('')),
 });
 
 const loginSchema = z.object({
