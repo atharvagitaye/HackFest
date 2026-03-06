@@ -1,6 +1,8 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, Leaf, CheckCircle, Utensils, Truck, Users, Package } from "lucide-react";
+import { ArrowRight, Leaf, CheckCircle, Utensils, Truck, Users, Package, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import Footer from "@/components/layout/Footer";
 import heroImage from "@/assets/hero-food-donation.jpg";
 import communityVolunteers from "@/assets/community-volunteers.jpg";
@@ -8,23 +10,62 @@ import communityKitchen from "@/assets/community-kitchen.jpg";
 import foodProduce from "@/assets/food-produce.jpg";
 
 const Landing = () => {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
   return (
     <div className="min-h-screen bg-background">
       {/* Top Nav */}
       <header className="sticky top-0 z-50 bg-card/80 backdrop-blur-md border-b border-border">
         <div className="container flex items-center justify-between h-16">
-          <Link to="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-              <Leaf className="w-5 h-5 text-primary-foreground" />
-            </div>
-            <span className="text-lg font-bold text-foreground">SurplusSync</span>
-          </Link>
+          <div className="flex items-center gap-2">
+            <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="md:hidden">
+                  <Menu className="h-5 w-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="w-[300px] sm:w-[400px]">
+                <div className="flex items-center gap-2 mb-8">
+                  <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shrink-0">
+                    <Leaf className="w-5 h-5 text-primary-foreground" />
+                  </div>
+                  <span className="text-lg font-bold text-foreground">SurplusSync</span>
+                </div>
+                <nav className="flex flex-col gap-4">
+                  {["How It Works", "Impact", "Solutions", "About Us"].map((item) => (
+                    <a
+                      key={item}
+                      href="#"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="px-3 py-2 text-sm font-medium rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                    >
+                      {item}
+                    </a>
+                  ))}
+                  <div className="flex flex-col gap-3 mt-4 border-t border-border pt-6">
+                    <Button variant="outline" asChild className="w-full justify-center">
+                      <Link to="/dashboard" onClick={() => setIsMobileMenuOpen(false)}>Log In</Link>
+                    </Button>
+                    <Button asChild className="w-full justify-center">
+                      <Link to="/dashboard" onClick={() => setIsMobileMenuOpen(false)}>Join the Movement</Link>
+                    </Button>
+                  </div>
+                </nav>
+              </SheetContent>
+            </Sheet>
+            <Link to="/" className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shrink-0">
+                <Leaf className="w-5 h-5 text-primary-foreground" />
+              </div>
+              <span className="text-lg font-bold text-foreground hidden sm:inline-block">SurplusSync</span>
+            </Link>
+          </div>
           <nav className="hidden md:flex items-center gap-6">
             {["How It Works", "Impact", "Solutions", "About Us"].map((item) => (
               <a key={item} href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">{item}</a>
             ))}
           </nav>
-          <div className="flex items-center gap-3">
+          <div className="hidden md:flex items-center gap-3">
             <Link to="/dashboard" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Log In</Link>
             <Button asChild>
               <Link to="/dashboard">Join the Movement</Link>
@@ -54,7 +95,7 @@ const Landing = () => {
             </div>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <div className="flex -space-x-2">
-                {[1,2,3].map(i => (
+                {[1, 2, 3].map(i => (
                   <div key={i} className="w-8 h-8 rounded-full bg-primary/20 border-2 border-card" />
                 ))}
               </div>
