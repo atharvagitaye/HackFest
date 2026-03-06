@@ -11,16 +11,25 @@ datasource db {
 }
 
 model User {
-  id             String   @id @default(uuid())
-  name           String   @db.VarChar(100)
-  email          String   @unique @db.VarChar(150)
-  passwordHash   String   @map("password_hash")
-  role           String   @db.VarChar(20) // DONOR | RECIPIENT | ADMIN
-  phone          String?  @db.VarChar(20)
-  isVerified     Boolean  @default(false) @map("is_verified")
-  trustScore     Float    @default(0.5) @map("trust_score")
-  organizationId String?  @unique @map("organization_id")
-  createdAt      DateTime @default(now()) @map("created_at")
+  id                  String   @id @default(uuid())
+  name                String   @db.VarChar(100)
+  email               String   @unique @db.VarChar(150)
+  passwordHash        String   @map("password_hash")
+  role                String   @db.VarChar(20) // DONOR | RECIPIENT | ADMIN
+  phone               String?  @db.VarChar(20)
+  isVerified          Boolean  @default(false) @map("is_verified")
+  trustScore          Float    @default(0.5) @map("trust_score")
+  organizationId      String?  @unique @map("organization_id")
+  
+  // KYC Verification fields
+  panNumber           String?  @map("pan_number") @db.VarChar(20)
+  panDocumentUrl      String?  @map("pan_document_url")
+  fssaiLicense        String?  @map("fssai_license") @db.VarChar(50)
+  fssaiDocumentUrl    String?  @map("fssai_document_url")
+  verificationStatus  String   @default("PENDING") @map("verification_status") @db.VarChar(20) // PENDING | APPROVED | REJECTED
+  verificationNotes   String?  @map("verification_notes")
+  
+  createdAt           DateTime @default(now()) @map("created_at")
 
   organization    Organization?          @relation(fields: [organizationId], references: [id])
   donations       Donation[]             @relation("DonorDonations")
@@ -33,6 +42,7 @@ model User {
 
   @@index([email])
   @@index([role])
+  @@index([verificationStatus])
   @@map("users")
 }
 
@@ -122,12 +132,15 @@ model Delivery {
   delayMinutes Int?      @map("delay_minutes")
   status       String?   @db.VarChar(30)
   completed    Boolean   @default(false)
+  qrToken      String?   @unique @map("qr_token") @db.VarChar(100)
+  qrConfirmedAt DateTime? @map("qr_confirmed_at")
 
   donation  Donation @relation(fields: [donationId], references: [id], onDelete: Cascade)
   recipient User     @relation("RecipientDeliveries", fields: [recipientId], references: [id])
 
   @@index([donationId])
   @@index([recipientId])
+  @@index([qrToken])
   @@map("deliveries")
 }
 

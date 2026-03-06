@@ -38,8 +38,10 @@ const Navbar = () => {
     ...(user?.role !== "DONOR"
       ? [{ label: "Matches", path: user?.role === "RECIPIENT" ? "/my-matches" : "/matches" }]
       : []),
+    { label: "Deliveries", path: "/delivery" },
     { label: "Live Map", path: "/live-map" },
     { label: "Impact", path: "/impact" },
+    { label: "Leaderboard", path: "/leaderboard" },
   ];
 
   const initials = user

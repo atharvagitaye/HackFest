@@ -102,4 +102,134 @@ const computeUserImpact = async (userId, role) => {
   };
 };
 
-module.exports = { computeSummary, getDailyImpact, computeUserImpact };
+/**
+ * Get top donors leaderboard
+ * @param {string} period - 'all' | 'weekly' | 'monthly'
+ * @param {number} limit - number of top users to return
+ */
+const getTopDonors = async (period = 'all', limit = 10) => {
+  let dateFilter = {};
+  
+  if (period === 'weekly') {
+    const weekAgo = new Date();
+    weekAgo.setDate(weekAgo.getDate() - 7);
+    dateFilter = { createdAt: { gte: weekAgo } };
+  } else if (period === 'monthly') {
+    const monthAgo = new Date();
+    monthAgo.setMonth(monthAgo.getMonth() - 1);
+    dateFilter = { createdAt: { gte: monthAgo } };
+  }
+
+  const donors = await prisma.user.findMany({
+    where: { 
+      role: 'DONOR',
+      donations: {
+        some: {
+          status: 'DELIVERED',
+          ...dateFilter,
+        },
+      },
+    },
+    select: {
+      id: true,
+      name: true,
+      trustScore: true,
+      organization: { select: { name: true } },
+      donations: {
+        where: { 
+          status: 'DELIVERED',
+          ...dateFilter,
+        },
+        select: { quantityKg: true, estimatedMeals: true },
+      },
+    },
+    take: limit * 3, // Get more to sort accurately
+  });
+
+  const leaderboard = donors.map(donor => {
+    const totalKg = donor.donations.reduce((sum, d) => sum + (d.quantityKg ?? 0), 0);
+    const totalMeals = donor.donations.reduce((sum, d) => sum + (d.estimatedMeals ?? Math.round((d.quantityKg ?? 0) / 0.5)), 0);
+    const totalDonations = donor.donations.length;
+    
+    return {
+      userId: donor.id,
+      name: donor.name,
+      organizationName: donor.organization?.name,
+      totalKgSaved: parseFloat(totalKg.toFixed(2)),
+      totalMealsSaved: totalMeals,
+      totalDonations,
+      trustScore: donor.trustScore,
+    };
+  })
+  .sort((a, b) => b.totalKgSaved - a.totalKgSaved)
+  .slice(0, limit);
+
+  return leaderboard;
+};
+
+/**
+ * Get top recipients leaderboard
+ * @param {string} period - 'all' | 'weekly' | 'monthly'
+ * @param {number} limit - number of top users to return
+ */
+const getTopRecipients = async (period = 'all', limit = 10) => {
+  let dateFilter = {};
+  
+  if (period === 'weekly') {
+    const weekAgo = new Date();
+    weekAgo.setDate(weekAgo.getDate() - 7);
+    dateFilter = { deliveryTime: { gte: weekAgo } };
+  } else if (period === 'monthly') {
+    const monthAgo = new Date();
+    monthAgo.setMonth(monthAgo.getMonth() - 1);
+    dateFilter = { deliveryTime: { gte: monthAgo } };
+  }
+
+  const recipients = await prisma.user.findMany({
+    where: { 
+      role: 'RECIPIENT',
+      deliveries: {
+        some: {
+          completed: true,
+          ...dateFilter,
+        },
+      },
+    },
+    select: {
+      id: true,
+      name: true,
+      trustScore: true,
+      organization: { select: { name: true } },
+      deliveries: {
+        where: { 
+          completed: true,
+          ...dateFilter,
+        },
+        include: { donation: { select: { quantityKg: true } } },
+      },
+    },
+    take: limit * 3,
+  });
+
+  const leaderboard = recipients.map(recipient => {
+    const totalKg = recipient.deliveries.reduce((sum, d) => sum + (d.donation?.quantityKg ?? 0), 0);
+    const totalMeals = Math.round(totalKg / 0.5);
+    const totalDeliveries = recipient.deliveries.length;
+    
+    return {
+      userId: recipient.id,
+      name: recipient.name,
+      organizationName: recipient.organization?.name,
+      totalKgReceived: parseFloat(totalKg.toFixed(2)),
+      totalMealsServed: totalMeals,
+      totalDeliveries,
+      trustScore: recipient.trustScore,
+    };
+  })
+  .sort((a, b) => b.totalKgReceived - a.totalKgReceived)
+  .slice(0, limit);
+
+  return leaderboard;
+};
+
+module.exports = { computeSummary, getDailyImpact, computeUserImpact, getTopDonors, getTopRecipients };

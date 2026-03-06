@@ -10,6 +10,10 @@ const router = Router();
 router.use(requireAuth, requireRole('ADMIN'));
 
 const verifySchema = z.object({ verified: z.boolean() });
+const kycSchema = z.object({
+  status: z.enum(['APPROVED', 'REJECTED']),
+  notes: z.string().optional(),
+});
 
 /**
  * @swagger
@@ -23,5 +27,7 @@ router.get('/users', adminController.listUsers);
 router.patch('/users/:id/verify', validate(verifySchema), adminController.verifyUser);
 router.delete('/users/:id', adminController.deleteUser);
 router.get('/donations', adminController.listAllDonations);
+router.get('/kyc/pending', adminController.getPendingKYC);
+router.patch('/kyc/:id', validate(kycSchema), adminController.updateKYCStatus);
 
 module.exports = router;

@@ -7,6 +7,7 @@ const router = Router();
 router.get('/summary', requireAuth, impactController.summary);
 router.get('/daily', requireAuth, impactController.daily);
 router.get('/my', requireAuth, impactController.myImpact);
+router.get('/leaderboard', requireAuth, impactController.leaderboard);
 
 module.exports = router;
 

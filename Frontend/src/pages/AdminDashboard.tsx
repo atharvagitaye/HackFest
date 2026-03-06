@@ -31,6 +31,8 @@ import {
   Lock,
   BarChart3,
   Plus,
+  ShieldCheck,
+  ShieldX,
 } from "lucide-react";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -77,6 +79,11 @@ const AdminDashboard = () => {
     queryFn: () => adminApi.listDonations(),
   });
 
+  const { data: pendingKYC = [] } = useQuery({
+    queryKey: ["admin-kyc-pending"],
+    queryFn: adminApi.getPendingKYC,
+  });
+
   /* ── Mutations ── */
   const verifyMutation = useMutation({
     mutationFn: ({ id, verified }: { id: string; verified: boolean }) =>
@@ -97,6 +104,18 @@ const AdminDashboard = () => {
       queryClient.invalidateQueries({ queryKey: ["admin-stats"] });
     },
     onError: (err: Error) => toast.error(err.message ?? "Failed to delete user"),
+  });
+
+  const kycMutation = useMutation({
+    mutationFn: ({ userId, status, notes }: { userId: string; status: 'APPROVED' | 'REJECTED'; notes?: string }) =>
+      adminApi.updateKYCStatus(userId, status, notes),
+    onSuccess: () => {
+      toast.success("KYC verification updated.");
+      queryClient.invalidateQueries({ queryKey: ["admin-kyc-pending"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-stats"] });
+    },
+    onError: (err: Error) => toast.error(err.message ?? "Failed to update KYC"),
   });
 
   /* ── Derived stat cards from real data ── */
@@ -218,6 +237,108 @@ const AdminDashboard = () => {
             </div>
           </div>
         </div>
+
+        {/* KYC Verification Pending */}
+        {pendingKYC.length > 0 && (
+          <div className="card-elevated p-6 mb-8 border-2 border-warning/30 bg-warning/5">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h3 className="font-semibold text-foreground flex items-center gap-2">
+                  <ShieldCheck className="w-5 h-5 text-warning" />
+                  KYC Verification Pending
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  Review and approve organization documents
+                </p>
+              </div>
+              <Badge variant="destructive">{pendingKYC.length} Pending</Badge>
+            </div>
+
+            <div className="space-y-3">
+              {pendingKYC.map((user: any) => (
+                <div key={user.id} className="bg-card border border-border rounded-lg p-4">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <h4 className="font-semibold text-foreground">{user.name}</h4>
+                        <Badge variant={user.role === 'DONOR' ? 'default' : 'secondary'}>
+                          {user.role}
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground mb-3">{user.email}</p>
+                      
+                      {user.role === 'RECIPIENT' && user.panNumber && (
+                        <div className="space-y-1 mb-2">
+                          <p className="text-xs font-medium text-foreground">PAN Number:</p>
+                          <p className="text-sm font-mono text-muted-foreground">{user.panNumber}</p>
+                          {user.panDocumentUrl && (
+                            <a 
+                              href={user.panDocumentUrl} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-xs text-primary hover:underline flex items-center gap-1"
+                            >
+                              <Eye className="w-3 h-3" />
+                              View Document
+                            </a>
+                          )}
+                        </div>
+                      )}
+                      
+                      {user.role === 'DONOR' && user.fssaiLicense && (
+                        <div className="space-y-1 mb-2">
+                          <p className="text-xs font-medium text-foreground">FSSAI License:</p>
+                          <p className="text-sm font-mono text-muted-foreground">{user.fssaiLicense}</p>
+                          {user.fssaiDocumentUrl && (
+                            <a 
+                              href={user.fssaiDocumentUrl} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-xs text-primary hover:underline flex items-center gap-1"
+                            >
+                              <Eye className="w-3 h-3" />
+                              View Document
+                            </a>
+                          )}
+                        </div>
+                      )}
+                      
+                      {user.organization && (
+                        <p className="text-xs text-muted-foreground">
+                          Org: {user.organization.name} ({user.organization.type})
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="default"
+                        onClick={() => kycMutation.mutate({ userId: user.id, status: 'APPROVED' })}
+                        disabled={kycMutation.isPending}
+                      >
+                        <CheckCircle className="w-4 h-4 mr-1" />
+                        Approve
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => {
+                          const notes = prompt("Reason for rejection (optional):");
+                          kycMutation.mutate({ userId: user.id, status: 'REJECTED', notes: notes || undefined });
+                        }}
+                        disabled={kycMutation.isPending}
+                      >
+                        <ShieldX className="w-4 h-4 mr-1" />
+                        Reject
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Users Management */}
         <div className="card-elevated p-6 mb-8">

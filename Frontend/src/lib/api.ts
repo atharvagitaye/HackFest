@@ -9,12 +9,14 @@ import type {
   Delivery,
   ImpactSummary,
   DailyImpactPoint,
+  UserImpact,
   TrustMetric,
   NearbyRecipient,
   Rating,
   SubmitRatingPayload,
   AdminUser,
   AdminStats,
+  LeaderboardEntry,
 } from '@/types/api';
 
 const BASE = '/api/v1';
@@ -126,6 +128,12 @@ export const deliveriesApi = {
   list: () => req<Delivery[]>('GET', '/deliveries'),
 
   getById: (id: string) => req<Delivery>('GET', `/deliveries/${id}`),
+
+  confirmPickupByQR: (qrToken: string) =>
+    req<Delivery>('POST', '/deliveries/qr/confirm', { qrToken }),
+
+  getByQRToken: (token: string) =>
+    req<Delivery>('GET', `/deliveries/qr/${token}`),
 };
 
 // ─── Ratings ──────────────────────────────────────────────────────────────────
@@ -154,10 +162,21 @@ export const adminApi = {
     const qs = params?.status ? `?status=${params.status}` : '';
     return req<Donation[]>('GET', `/admin/donations${qs}`);
   },
+  getPendingKYC: () => req<User[]>('GET', '/admin/kyc/pending'),
+  updateKYCStatus: (userId: string, status: 'APPROVED' | 'REJECTED', notes?: string) =>
+    req<User>('PATCH', `/admin/kyc/${userId}`, { status, notes }),
 };
 
 // ─── Impact ───────────────────────────────────────────────────────────────────
 export const impactApi = {
   summary: () => req<ImpactSummary>('GET', '/impact/summary'),
   daily: (days?: number) =>
-    req<DailyImpactPoint[]>('GET', `/impact/daily${days ? `?days=${days}` : ''}`),  myImpact: () => req<ImpactSummary>('GET', '/impact/my'),};
+    req<DailyImpactPoint[]>('GET', `/impact/daily${days ? `?days=${days}` : ''}`),
+  myImpact: () => req<UserImpact>('GET', '/impact/my'),
+  leaderboard: (params?: { type?: 'donors' | 'recipients'; period?: 'all' | 'weekly' | 'monthly'; limit?: number }) => {
+    const qs = params
+      ? '?' + new URLSearchParams(Object.entries(params).filter(([, v]) => v !== undefined).map(([k, v]) => [k, String(v)])).toString()
+      : '';
+    return req<LeaderboardEntry[]>('GET', `/impact/leaderboard${qs}`);
+  },
+};

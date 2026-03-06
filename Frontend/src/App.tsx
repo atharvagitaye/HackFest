@@ -19,6 +19,7 @@ import Register from "./pages/Register";
 import AdminDashboard from "./pages/AdminDashboard";
 import RecipientMatches from "./pages/RecipientMatches";
 import MyDonations from "./pages/MyDonations";
+import Leaderboard from "./pages/Leaderboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -64,6 +65,7 @@ const App = () => (
           <Route path="/donate" element={<ProtectedRoute><DonationWizard /></ProtectedRoute>} />
           <Route path="/review" element={<ProtectedRoute><DonationReview /></ProtectedRoute>} />
           <Route path="/my-donations" element={<ProtectedRoute><MyDonations /></ProtectedRoute>} />
+          <Route path="/leaderboard" element={<ProtectedRoute><Leaderboard /></ProtectedRoute>} />
 
           <Route path="*" element={<NotFound />} />
         </Routes>

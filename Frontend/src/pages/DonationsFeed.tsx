@@ -5,10 +5,11 @@ import { toast } from "sonner";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import StatusBadge from "@/components/shared/StatusBadge";
+import QRScanner from "@/components/qr/QRScanner";
 import { donationsApi, matchesApi, deliveriesApi } from "@/lib/api";
 import { Donation, Match, Delivery } from "@/types/api";
 import { Button } from "@/components/ui/button";
-import { Plus, Package, MapPin, X, Check, Truck, ClipboardList, Search, Star, Clock } from "lucide-react";
+import { Plus, Package, MapPin, X, Check, Truck, ClipboardList, Search, Star, Clock, Scan } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
 import foodBakery from "@/assets/food-bakery.jpg";
@@ -60,6 +61,7 @@ const DonationsFeed = () => {
   const [activeCategory, setActiveCategory] = useState("All Items");
   const [searchText, setSearchText] = useState("");
   const [statusFilter, setStatusFilter] = useState("Open");
+  const [showQRScanner, setShowQRScanner] = useState(false);
 
   const { data: donationsData, isLoading } = useQuery({
     queryKey: ["donations"],
@@ -121,6 +123,22 @@ const DonationsFeed = () => {
       navigate(`/delivery/${delivery.id}`);
     },
     onError: (err: Error) => toast.error(err.message ?? "Failed to start pickup"),
+  });
+
+  const confirmQRPickupMutation = useMutation({
+    mutationFn: (qrToken: string) => deliveriesApi.confirmPickupByQR(qrToken),
+    onSuccess: (delivery) => {
+      toast.success("Pickup confirmed via QR code! ✓");
+      setShowQRScanner(false);
+      queryClient.invalidateQueries({ queryKey: ["my-matches"] });
+      queryClient.invalidateQueries({ queryKey: ["donations"] });
+      queryClient.invalidateQueries({ queryKey: ["deliveries"] });
+      navigate(`/delivery/${delivery.id}`);
+    },
+    onError: (err: Error) => {
+      toast.error(err.message ?? "QR confirmation failed");
+      setShowQRScanner(false);
+    },
   });
 
   // Segregate matches by action needed
@@ -218,6 +236,12 @@ const DonationsFeed = () => {
             {acceptedDonations.length > 0 && (
               <div className="mb-4">
                 <p className="text-xs font-semibold uppercase text-muted-foreground mb-2">Accepted — Ready for Pickup</p>
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3">
+                  <p className="text-xs text-blue-800 font-medium flex items-center gap-2">
+                    <Scan className="w-4 h-4" />
+                    Scan the donor's QR code at pickup location to confirm collection
+                  </p>
+                </div>
                 <div className="space-y-3">
                   {acceptedDonations.map((m) => (
                     <div key={m.id} className="flex items-center justify-between gap-4 bg-muted/50 rounded-xl p-4">
@@ -237,10 +261,9 @@ const DonationsFeed = () => {
                       </div>
                       <Button
                         size="sm"
-                        disabled={startPickupMutation.isPending}
-                        onClick={() => m.donation && startPickupMutation.mutate(m.donation.id)}
+                        onClick={() => setShowQRScanner(true)}
                       >
-                        <Truck className="w-3 h-3 mr-1" />Mark Picked Up
+                        <Scan className="w-3 h-3 mr-1" />Scan QR to Pickup
                       </Button>
                     </div>
                   ))}
@@ -287,9 +310,18 @@ const DonationsFeed = () => {
               <h1 className="text-3xl font-bold text-foreground">Surplus Donations Feed</h1>
               <p className="text-muted-foreground text-sm mt-1">AI-powered food redistribution opportunities in your area</p>
             </div>
-            {user?.role === "DONOR" && (
-              <Button onClick={() => navigate("/donate")}><Plus className="w-4 h-4 mr-2" />Post Donation</Button>
-            )}
+            <div className="flex gap-2">
+              {user?.role === "RECIPIENT" && (
+                <Button variant="outline" onClick={() => setShowQRScanner(true)}>
+                  <Scan className="w-4 h-4 mr-2" />Scan QR Code
+                </Button>
+              )}
+              {user?.role === "DONOR" && (
+                <Button onClick={() => navigate("/donate")}>
+                  <Plus className="w-4 h-4 mr-2" />Post Donation
+                </Button>
+              )}
+            </div>
           </div>
 
           {/* Search + status filter row */}
@@ -426,6 +458,15 @@ const DonationsFeed = () => {
         </div>
       </main>
       <Footer />
+
+      {/* QR Scanner Modal */}
+      {showQRScanner && (
+        <QRScanner
+          onScanSuccess={(qrToken) => confirmQRPickupMutation.mutate(qrToken)}
+          onClose={() => setShowQRScanner(false)}
+          isScanning={confirmQRPickupMutation.isPending}
+        />
+      )}
     </div>
   );
 };

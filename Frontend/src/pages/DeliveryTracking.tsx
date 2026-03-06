@@ -6,6 +6,7 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import MapWidget from "@/components/shared/MapWidget";
 import RatingModal from "@/components/shared/RatingModal";
+import QRCodeDisplay from "@/components/qr/QRCodeDisplay";
 import { Button } from "@/components/ui/button";
 import { deliveriesApi } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
@@ -86,14 +87,24 @@ const DeliveryTracking = () => {
             <div className="space-y-4">
               {deliveries.map((d) => (
                 <div key={d.id} className="card-elevated-hover p-5 flex items-center justify-between gap-4">
-                  <div>
+                  <div className="flex-1">
                     <p className="font-semibold text-foreground">
-                      {d.donation?.organization?.name ?? d.donation?.foodCategory ?? "Delivery"}
+                      {user?.role === 'DONOR' 
+                        ? `Delivery to ${d.recipient?.name ?? 'Recipient'}`
+                        : (d.donation?.organization?.name ?? d.donation?.foodCategory ?? "Delivery")
+                      }
                     </p>
                     <p className="text-xs text-muted-foreground mt-1">
+                      {d.donation?.foodCategory && `${d.donation.foodCategory} · `}
+                      {d.donation?.quantityKg && `${d.donation.quantityKg} kg · `}
                       {d.completed ? "Completed" : (d.status ?? "In Progress")} ·{" "}
                       {d.pickupTime ? new Date(d.pickupTime).toLocaleString() : "Pending"}
                     </p>
+                    {d.qrConfirmedAt && (
+                      <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
+                        <CheckCircle className="w-3 h-3" /> QR Confirmed at {new Date(d.qrConfirmedAt).toLocaleString()}
+                      </p>
+                    )}
                   </div>
                   <Button variant="outline" size="sm" onClick={() => navigate(`/delivery/${d.id}`)}>
                     Track
@@ -235,6 +246,10 @@ const DeliveryTracking = () => {
                   <p className="text-foreground font-medium">{delivery.donation?.donor?.name ?? "—"}</p>
                 </div>
                 <div>
+                  <p className="text-xs text-primary uppercase font-semibold">RECIPIENT</p>
+                  <p className="text-foreground font-medium">{delivery.recipient?.name ?? "—"}</p>
+                </div>
+                <div>
                   <p className="text-xs text-primary uppercase font-semibold">ORGANIZATION</p>
                   <p className="text-foreground font-medium">{delivery.donation?.organization?.name ?? "—"}</p>
                 </div>
@@ -248,6 +263,18 @@ const DeliveryTracking = () => {
                 </div>
               </div>
             </div>
+
+            {/* QR Code for Pickup - Show to DONOR */}
+            {user?.role === 'DONOR' && delivery.qrToken && delivery.donation?.status !== 'DELIVERED' && (
+              <QRCodeDisplay
+                qrToken={delivery.qrToken}
+                donationInfo={{
+                  foodType: delivery.donation?.foodCategory ?? 'Food Donation',
+                  quantity: delivery.donation?.quantityKg != null ? `${delivery.donation.quantityKg} kg` : 'N/A',
+                  pickupLocation: delivery.donation?.pickupLocation ?? 'TBD',
+                }}
+              />
+            )}
 
             {/* Timing */}
             <div className="card-elevated p-5">

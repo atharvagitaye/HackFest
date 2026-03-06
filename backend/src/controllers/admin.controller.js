@@ -107,4 +107,58 @@ const getStats = async (req, res, next) => {
   }
 };
 
-module.exports = { listUsers, verifyUser, deleteUser, listAllDonations, getStats };
+// ── KYC Verification ───────────────────────────────────────────────────────────
+
+const getPendingKYC = async (req, res, next) => {
+  try {
+    const pending = await prisma.user.findMany({
+      where: {
+        verificationStatus: 'PENDING',
+        role: { in: ['DONOR', 'RECIPIENT'] },
+      },
+      include: { organization: true },
+      orderBy: { createdAt: 'desc' },
+    });
+    sendSuccess(res, pending);
+  } catch (err) {
+    next(err);
+  }
+};
+
+const updateKYCStatus = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { status, notes } = req.body;
+    
+    if (!['APPROVED', 'REJECTED'].includes(status)) {
+      return next(AppError.badRequest('Status must be APPROVED or REJECTED'));
+    }
+
+    const user = await prisma.user.findUnique({ where: { id } });
+    if (!user) return next(AppError.notFound('User not found'));
+
+    const updated = await prisma.user.update({
+      where: { id },
+      data: {
+        verificationStatus: status,
+        verificationNotes: notes || null,
+        ...(status === 'APPROVED' && { isVerified: true }),
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        verificationStatus: true,
+        verificationNotes: true,
+        isVerified: true,
+      },
+    });
+
+    sendSuccess(res, updated, `KYC ${status.toLowerCase()} successfully`);
+  } catch (err) {
+    next(err);
+  }
+};
+
+module.exports = { listUsers, verifyUser, deleteUser, listAllDonations, getStats, getPendingKYC, updateKYCStatus };

@@ -4,12 +4,13 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
+import QRScanner from "@/components/qr/QRScanner";
 import { Button } from "@/components/ui/button";
 import { matchesApi, deliveriesApi } from "@/lib/api";
 import { Match, Delivery } from "@/types/api";
 import {
   Handshake, Check, X, Truck, Package, MapPin,
-  Clock, CheckCircle, Star, AlertCircle, Timer
+  Clock, CheckCircle, Star, AlertCircle, Timer, Scan
 } from "lucide-react";
 
 const STATUS_ORDER = ["MATCHED", "ACCEPTED", "PICKED_UP", "DELIVERED", "CANCELLED", "EXPIRED"];
@@ -48,6 +49,7 @@ const RecipientMatches = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("All");
+  const [showQRScanner, setShowQRScanner] = useState(false);
 
   const { data: allMatches = [], isLoading } = useQuery<Match[]>({
     queryKey: ["my-matches"],
@@ -90,6 +92,21 @@ const RecipientMatches = () => {
       navigate(`/delivery/${delivery.id}`);
     },
     onError: (err: Error) => toast.error(err.message ?? "Failed to start pickup"),
+  });
+
+  const confirmQRPickupMutation = useMutation({
+    mutationFn: (qrToken: string) => deliveriesApi.confirmPickupByQR(qrToken),
+    onSuccess: (delivery) => {
+      toast.success("Pickup confirmed via QR code! ✓");
+      setShowQRScanner(false);
+      queryClient.invalidateQueries({ queryKey: ["my-matches"] });
+      queryClient.invalidateQueries({ queryKey: ["deliveries"] });
+      navigate(`/delivery/${delivery.id}`);
+    },
+    onError: (err: Error) => {
+      toast.error(err.message ?? "QR confirmation failed");
+      setShowQRScanner(false);
+    },
   });
 
   const visibleMatches = tabFilter(activeTab, allMatches);
@@ -267,9 +284,9 @@ const RecipientMatches = () => {
                         <Button
                           size="sm"
                           disabled={!isActionable}
-                          onClick={() => m.donation && startPickupMutation.mutate(m.donation.id)}
+                          onClick={() => setShowQRScanner(true)}
                         >
-                          <Truck className="w-4 h-4 mr-1" /> Mark Picked Up
+                          <Scan className="w-4 h-4 mr-1" /> Scan QR to Pickup
                         </Button>
                       )}
 
@@ -300,6 +317,15 @@ const RecipientMatches = () => {
         )}
       </main>
       <Footer />
+
+      {/* QR Scanner Modal */}
+      {showQRScanner && (
+        <QRScanner
+          onScanSuccess={(qrToken) => confirmQRPickupMutation.mutate(qrToken)}
+          onClose={() => setShowQRScanner(false)}
+          isScanning={confirmQRPickupMutation.isPending}
+        />
+      )}
     </div>
   );
 };

@@ -1,5 +1,6 @@
 const donationRepo = require('../repositories/donation.repository');
 const matchRepo = require('../repositories/match.repository');
+const deliveryRepo = require('../repositories/delivery.repository');
 const mlClient = require('../ml/mlClient');
 const AppError = require('../utils/AppError');
 const config = require('../config/env');
@@ -102,6 +103,13 @@ const acceptMatch = async (matchId, recipientId) => {
     oldStatus: 'MATCHED',
     newStatus: 'ACCEPTED',
     changedBy: recipientId,
+  });
+
+  // Create delivery record with QR token when match is accepted
+  await deliveryRepo.create({
+    donationId: match.donationId,
+    recipientId: recipientId,
+    status: 'PENDING_PICKUP', // Not yet picked up, waiting for QR scan
   });
 
   return matchRepo.findById(matchId);

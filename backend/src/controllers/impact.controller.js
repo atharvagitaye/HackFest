@@ -29,4 +29,14 @@ const myImpact = async (req, res, next) => {
   }
 };
 
-module.exports = { summary, daily, myImpact };
+const leaderboard = async (req, res, next) => {
+  try {
+    const { type = 'donors', period = 'all', limit = 10 } = req.query;
+    const data = await impactService.getLeaderboard(type, period, parseInt(limit) || 10);
+    sendSuccess(res, data);
+  } catch (err) {
+    next(err);
+  }
+};
+
+module.exports = { summary, daily, myImpact, leaderboard };

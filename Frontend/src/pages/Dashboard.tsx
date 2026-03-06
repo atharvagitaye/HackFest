@@ -2,11 +2,13 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import StatCard from "@/components/shared/StatCard";
 import MapWidget from "@/components/shared/MapWidget";
+import QRScanner from "@/components/qr/QRScanner";
 import { Button } from "@/components/ui/button";
 import {
   Plus, Truck, Package, Handshake, Leaf, Clock,
-  CheckCircle, AlertCircle, Sparkles, ArrowRight,
+  CheckCircle, AlertCircle, Sparkles, ArrowRight, Scan,
 } from "lucide-react";
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { impactApi, donationsApi, matchesApi, deliveriesApi } from "@/lib/api";
 import { useNavigate } from "react-router-dom";
@@ -120,6 +122,7 @@ const DonorDashboard = ({ impact, liveMarkers }: { impact: any; liveMarkers: any
 const RecipientDashboard = ({ liveMarkers }: { liveMarkers: any[] }) => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const [showQRScanner, setShowQRScanner] = useState(false);
 
   const { data: myMatches = [] } = useQuery<Match[]>({
     queryKey: ["my-matches"],
@@ -154,6 +157,21 @@ const RecipientDashboard = ({ liveMarkers }: { liveMarkers: any[] }) => {
       navigate(`/delivery/${delivery.id}`);
     },
     onError: (err: Error) => toast.error(err.message),
+  });
+
+  const confirmQRPickupMutation = useMutation({
+    mutationFn: (qrToken: string) => deliveriesApi.confirmPickupByQR(qrToken),
+    onSuccess: (delivery) => {
+      toast.success("Pickup confirmed via QR code! ✓");
+      setShowQRScanner(false);
+      queryClient.invalidateQueries({ queryKey: ["my-matches"] });
+      queryClient.invalidateQueries({ queryKey: ["deliveries"] });
+      navigate(`/delivery/${delivery.id}`);
+    },
+    onError: (err: Error) => {
+      toast.error(err.message ?? "QR confirmation failed");
+      setShowQRScanner(false);
+    },
   });
 
   const stats = [
@@ -256,8 +274,8 @@ const RecipientDashboard = ({ liveMarkers }: { liveMarkers: any[] }) => {
                   </div>
                   <p className="text-sm font-medium text-foreground capitalize">{m.donation?.foodCategory ?? "Food Item"}</p>
                   <p className="text-xs text-muted-foreground mb-2">{m.donation?.quantityKg} kg</p>
-                  <Button size="sm" className="h-7 text-xs w-full" onClick={() => m.donation && startPickupMutation.mutate(m.donation.id)} disabled={startPickupMutation.isPending}>
-                    <Truck className="w-3 h-3 mr-1" />Mark Picked Up
+                  <Button size="sm" className="h-7 text-xs w-full" onClick={() => setShowQRScanner(true)}>
+                    <Scan className="w-3 h-3 mr-1" />Scan QR to Pickup
                   </Button>
                 </div>
               ))}
@@ -270,6 +288,15 @@ const RecipientDashboard = ({ liveMarkers }: { liveMarkers: any[] }) => {
           )}
         </div>
       </div>
+
+      {/* QR Scanner Modal */}
+      {showQRScanner && (
+        <QRScanner
+          onScanSuccess={(qrToken) => confirmQRPickupMutation.mutate(qrToken)}
+          onClose={() => setShowQRScanner(false)}
+          isScanning={confirmQRPickupMutation.isPending}
+        />
+      )}
     </>
   );
 };

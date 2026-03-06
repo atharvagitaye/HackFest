@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Mail, Lock, Eye, EyeOff, Leaf, Building2, Phone } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, Leaf, Building2, Phone, FileText, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,6 +20,10 @@ const Register = () => {
     password: "",
     confirmPassword: "",
     role: "",
+    panNumber: "",
+    panDocumentUrl: "",
+    fssaiLicense: "",
+    fssaiDocumentUrl: "",
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -39,6 +43,15 @@ const Register = () => {
     else if (form.password.length < 8) errs.password = "Minimum 8 characters";
     if (form.password !== form.confirmPassword) errs.confirmPassword = "Passwords don't match";
     if (!form.role) errs.role = "Please select a role";
+    
+    // KYC validation
+    if (form.role === "recipient" && !form.panNumber.trim()) {
+      errs.panNumber = "PAN Number is required for NGOs";
+    }
+    if (form.role === "donor" && !form.fssaiLicense.trim()) {
+      errs.fssaiLicense = "FSSAI License is required for Donors";
+    }
+    
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -59,9 +72,13 @@ const Register = () => {
         password: form.password,
         role: roleMap[form.role] ?? 'DONOR',
         phone: form.phone || undefined,
+        panNumber: form.panNumber || undefined,
+        panDocumentUrl: form.panDocumentUrl || undefined,
+        fssaiLicense: form.fssaiLicense || undefined,
+        fssaiDocumentUrl: form.fssaiDocumentUrl || undefined,
       });
       setAuth(token, user);
-      toast.success('Account created! Welcome to SurplusSync.');
+      toast.success('Account created! Verification pending from admin.');
       navigate('/dashboard');
     } catch (err: any) {
       toast.error(err.message || 'Registration failed');
@@ -137,6 +154,86 @@ const Register = () => {
               </Select>
               {fieldError("role")}
             </div>
+
+            {/* KYC Fields for NGO/Recipient */}
+            {form.role === "recipient" && (
+              <>
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mt-2">
+                  <p className="text-xs text-amber-800 font-medium">
+                    📋 KYC Verification Required: Please provide your PAN details for verification
+                  </p>
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="panNumber">PAN Number *</Label>
+                  <div className="relative">
+                    <FileText className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input 
+                      id="panNumber" 
+                      placeholder="ABCDE1234F" 
+                      value={form.panNumber} 
+                      onChange={set("panNumber")} 
+                      className="pl-10 uppercase" 
+                      maxLength={10}
+                    />
+                  </div>
+                  {fieldError("panNumber")}
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="panDocumentUrl">PAN Document URL (Optional)</Label>
+                  <div className="relative">
+                    <Upload className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input 
+                      id="panDocumentUrl" 
+                      placeholder="https://drive.google.com/..." 
+                      value={form.panDocumentUrl} 
+                      onChange={set("panDocumentUrl")} 
+                      className="pl-10" 
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">Upload to Google Drive/Dropbox and paste the link</p>
+                </div>
+              </>
+            )}
+
+            {/* KYC Fields for Donor */}
+            {form.role === "donor" && (
+              <>
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-2">
+                  <p className="text-xs text-blue-800 font-medium">
+                    📋 KYC Verification Required: Please provide your FSSAI License for verification
+                  </p>
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="fssaiLicense">FSSAI License Number *</Label>
+                  <div className="relative">
+                    <FileText className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input 
+                      id="fssaiLicense" 
+                      placeholder="12345678901234" 
+                      value={form.fssaiLicense} 
+                      onChange={set("fssaiLicense")} 
+                      className="pl-10" 
+                      maxLength={14}
+                    />
+                  </div>
+                  {fieldError("fssaiLicense")}
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="fssaiDocumentUrl">FSSAI Document URL (Optional)</Label>
+                  <div className="relative">
+                    <Upload className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input 
+                      id="fssaiDocumentUrl" 
+                      placeholder="https://drive.google.com/..." 
+                      value={form.fssaiDocumentUrl} 
+                      onChange={set("fssaiDocumentUrl")} 
+                      className="pl-10" 
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">Upload to Google Drive/Dropbox and paste the link</p>
+                </div>
+              </>
+            )}
 
             {/* Password */}
             <div className="space-y-1.5">

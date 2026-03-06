@@ -9,6 +9,12 @@ export interface User {
   trustScore: number;
   organizationId?: string;
   organization?: Organization;
+  panNumber?: string;
+  panDocumentUrl?: string;
+  fssaiLicense?: string;
+  fssaiDocumentUrl?: string;
+  verificationStatus?: 'PENDING' | 'APPROVED' | 'REJECTED';
+  verificationNotes?: string;
   createdAt: string;
 }
 
@@ -24,6 +30,10 @@ export interface RegisterPayload {
   role: 'DONOR' | 'RECIPIENT' | 'ADMIN';
   phone?: string;
   organizationId?: string;
+  panNumber?: string;
+  panDocumentUrl?: string;
+  fssaiLicense?: string;
+  fssaiDocumentUrl?: string;
 }
 
 // ─── Organizations ────────────────────────────────────────────────────────────
@@ -109,10 +119,13 @@ export interface Delivery {
   delayMinutes?: number;
   status?: string;
   completed: boolean;
+  qrToken?: string;
+  qrConfirmedAt?: string;
   donation?: Donation & {
     donor?: { id: string; name: string };
     organization?: Organization;
   };
+  recipient?: { id: string; name: string };
 }
 
 // ─── Impact ───────────────────────────────────────────────────────────────────
@@ -203,4 +216,18 @@ export interface StatusLog {
   changedBy: string;
   changedAt: string;
   changer?: { id: string; name: string; role: string };
+}
+
+// ─── Leaderboard ──────────────────────────────────────────────────────────────
+export interface LeaderboardEntry {
+  userId: string;
+  name: string;
+  organizationName?: string;
+  totalKgSaved?: number;
+  totalKgReceived?: number;
+  totalMealsSaved?: number;
+  totalMealsServed?: number;
+  totalDonations?: number;
+  totalDeliveries?: number;
+  trustScore: number;
 }

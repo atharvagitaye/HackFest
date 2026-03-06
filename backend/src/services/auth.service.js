@@ -6,7 +6,10 @@ const AppError = require('../utils/AppError');
 
 const SALT_ROUNDS = 12;
 
-const register = async ({ name, email, password, role, phone, organizationId }) => {
+const register = async ({ 
+  name, email, password, role, phone, organizationId,
+  panNumber, panDocumentUrl, fssaiLicense, fssaiDocumentUrl 
+}) => {
   const existing = await userRepo.findByEmail(email);
   if (existing) {
     throw AppError.conflict('Email already in use', 'EMAIL_TAKEN');
@@ -21,6 +24,10 @@ const register = async ({ name, email, password, role, phone, organizationId }) 
     role,
     phone,
     ...(organizationId && { organizationId }),
+    ...(panNumber && { panNumber }),
+    ...(panDocumentUrl && { panDocumentUrl }),
+    ...(fssaiLicense && { fssaiLicense }),
+    ...(fssaiDocumentUrl && { fssaiDocumentUrl }),
   });
 
   const token = signToken(user.id);

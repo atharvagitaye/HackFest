@@ -66,4 +66,26 @@ const completeDelivery = async (deliveryId, userId) => {
   return updated;
 };
 
-module.exports = { startDelivery, completeDelivery };
+const confirmPickupByQR = async (qrToken, userId) => {
+  const delivery = await deliveryRepo.confirmPickup(qrToken, userId);
+  if (!delivery) throw AppError.notFound('Invalid QR code or delivery not found');
+
+  // Update donation status to PICKED_UP
+  await donationRepo.updateStatus(delivery.donationId, 'PICKED_UP');
+  await donationRepo.createStatusLog({
+    donationId: delivery.donationId,
+    oldStatus: delivery.donation.status,
+    newStatus: 'PICKED_UP',
+    changedBy: userId,
+  });
+
+  return delivery;
+};
+
+const getDeliveryByQR = async (qrToken) => {
+  const delivery = await deliveryRepo.findByQRToken(qrToken);
+  if (!delivery) throw AppError.notFound('Invalid QR code or delivery not found');
+  return delivery;
+};
+
+module.exports = { startDelivery, completeDelivery, confirmPickupByQR, getDeliveryByQR };

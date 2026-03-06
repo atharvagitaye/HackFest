@@ -101,4 +101,52 @@ router.get('/:id', requireAuth, deliveryController.getById);
  */
 router.post('/complete', requireAuth, requireRole('RECIPIENT'), validate(completeSchema), deliveryController.complete);
 
+// QR Code routes
+const qrConfirmSchema = z.object({
+  qrToken: z.string().min(1),
+});
+
+/**
+ * @swagger
+ * /deliveries/qr/confirm:
+ *   post:
+ *     summary: Confirm pickup via QR code scan (RECIPIENT only)
+ *     tags: [Deliveries]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [qrToken]
+ *             properties:
+ *               qrToken: { type: string }
+ *     responses:
+ *       200:
+ *         description: Pickup confirmed via QR code
+ */
+router.post('/qr/confirm', requireAuth, requireRole('RECIPIENT'), validate(qrConfirmSchema), deliveryController.confirmPickupByQR);
+
+/**
+ * @swagger
+ * /deliveries/qr/{token}:
+ *   get:
+ *     summary: Get delivery details by QR token
+ *     tags: [Deliveries]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: token
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Delivery details
+ */
+router.get('/qr/:token', requireAuth, deliveryController.getByQRToken);
+
 module.exports = router;
