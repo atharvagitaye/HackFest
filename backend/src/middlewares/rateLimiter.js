@@ -9,11 +9,11 @@ const rateLimit = require('express-rate-limit');
 
 /**
  * General API rate limiter
- * Max 100 requests per 15 minutes per IP
+ * Max 1000 requests per 15 minutes per IP
  */
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100,
+  max: 1000,
   message: {
     success: false,
     message: 'Too many requests from this IP, please try again after 15 minutes.',
@@ -24,11 +24,11 @@ const apiLimiter = rateLimit({
 
 /**
  * Strict rate limiter for authentication endpoints
- * Max 5 login/register attempts per 15 minutes per IP
+ * Max 50 login/register attempts per 15 minutes per IP
  */
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5,
+  max: 50,
   message: {
     success: false,
     message: 'Too many authentication attempts, please try again after 15 minutes.',
@@ -40,11 +40,11 @@ const authLimiter = rateLimit({
 
 /**
  * Moderate rate limiter for donation creation
- * Max 20 donations per hour per user
+ * Max 100 donations per hour per user
  */
 const donationCreateLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
-  max: 20,
+  max: 100,
   message: {
     success: false,
     message: 'Too many donations created, please try again after an hour.',
@@ -55,11 +55,11 @@ const donationCreateLimiter = rateLimit({
 
 /**
  * Generous rate limiter for matching operations
- * Max 50 match generations per hour (computationally expensive)
+ * Max 200 match generations per hour (computationally expensive)
  */
 const matchLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
-  max: 50,
+  max: 200,
   message: {
     success: false,
     message: 'Too many match generation requests, please try again after an hour.',

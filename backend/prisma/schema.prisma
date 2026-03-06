@@ -65,7 +65,7 @@ model Organization {
 model Donation {
   id             String    @id @default(uuid())
   donorId        String    @map("donor_id")
-  organizationId String    @map("organization_id")
+  organizationId String?   @map("organization_id")
   foodCategory   String?   @map("food_category") @db.VarChar(100)
   quantityKg     Float?    @map("quantity_kg")
   estimatedMeals Int?      @map("estimated_meals")
@@ -77,8 +77,8 @@ model Donation {
   status         String    @default("REPORTED") @db.VarChar(30)
   createdAt      DateTime  @default(now()) @map("created_at")
 
-  donor        User          @relation("DonorDonations", fields: [donorId], references: [id])
-  organization Organization  @relation(fields: [organizationId], references: [id])
+  donor        User           @relation("DonorDonations", fields: [donorId], references: [id])
+  organization Organization?  @relation(fields: [organizationId], references: [id])
   images       DonationImage[]
   matches      Match[]
   deliveries   Delivery[]
