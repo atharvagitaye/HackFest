@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Html5Qrcode } from "html5-qrcode";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -33,7 +33,7 @@ export default function QRScanner({ onScanSuccess, onClose, isScanning = false }
     };
   }, []);
 
-  const startScanning = async () => {
+  const startScanning = useCallback(async () => {
     try {
       setError("");
       setPermissionDenied(false);
@@ -67,6 +67,8 @@ export default function QRScanner({ onScanSuccess, onClose, isScanning = false }
         const stream = await navigator.mediaDevices.getUserMedia(constraints);
         // Stop the test stream - Html5Qrcode will create its own
         stream.getTracks().forEach(track => track.stop());
+        // Wait for the camera hardware to fully release before re-acquiring
+        await new Promise<void>(resolve => setTimeout(resolve, 600));
       } catch (permErr: any) {
         console.error("Permission error:", permErr);
         setScanning(false);
@@ -113,7 +115,7 @@ export default function QRScanner({ onScanSuccess, onClose, isScanning = false }
       setScanning(false);
       setPermissionDenied(true);
     }
-  };
+  }, [isMobile, onScanSuccess]);
 
   useEffect(() => {
     if (!isMobile || autoStartAttempted || scanning || error) {
