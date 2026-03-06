@@ -18,6 +18,10 @@ const registerSchema = z.object({
   panDocumentUrl: z.string().url().optional().or(z.literal('')),
   fssaiLicense: z.string().max(50).optional(),
   fssaiDocumentUrl: z.string().url().optional().or(z.literal('')),
+  address: z.string().max(300).optional(),
+  latitude: z.number().optional(),
+  longitude: z.number().optional(),
+  maxCapacityKg: z.number().positive().optional(),
 });
 
 const loginSchema = z.object({

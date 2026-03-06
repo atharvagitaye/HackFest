@@ -118,6 +118,7 @@ model Match {
   donation  Donation @relation(fields: [donationId], references: [id], onDelete: Cascade)
   recipient User     @relation("RecipientMatches", fields: [recipientId], references: [id])
 
+  @@unique([donationId, recipientId])
   @@index([donationId])
   @@index([recipientId])
   @@map("matches")

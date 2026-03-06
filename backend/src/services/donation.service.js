@@ -1,7 +1,9 @@
 const donationRepo = require('../repositories/donation.repository');
-const matchRepo = require('../repositories/match.repository');
+const matchService = require('./match.service');
 const AppError = require('../utils/AppError');
 const config = require('../config/env');
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
 
 const VALID_TRANSITIONS = {
   REPORTED: ['MATCHED', 'CANCELLED'],
@@ -14,28 +16,26 @@ const VALID_TRANSITIONS = {
 };
 
 const createDonation = async (donorId, body) => {
-  const donation = await donationRepo.create({ donorId, ...body });
+  // If the donor didn't supply pickup coordinates, inherit from their organization
+  let { latitude, longitude } = body;
+  if (!latitude || !longitude) {
+    const donor = await prisma.user.findUnique({
+      where: { id: donorId },
+      include: { organization: true },
+    });
+    if (donor?.organization?.latitude && donor?.organization?.longitude) {
+      latitude = donor.organization.latitude;
+      longitude = donor.organization.longitude;
+    }
+  }
+
+  const donation = await donationRepo.create({ donorId, ...body, latitude, longitude });
 
   // Auto-run AI matching if coordinates are provided
   if (donation.latitude && donation.longitude) {
     try {
-      const radius = config.matching.radiusKm;
-      const candidates = await donationRepo.findNearbyRecipients(donation, radius);
-      if (candidates.length > 0) {
-        const now = new Date();
-        const expiryMs = donation.expiryTime ? new Date(donation.expiryTime) - now : null;
-        const maxMs = 24 * 60 * 60 * 1000;
-        const records = candidates.map((c) => ({
-          donationId: donation.id,
-          recipientId: c.recipientId,
-          distanceKm: c.distance_km,
-          urgencyScore: expiryMs !== null ? parseFloat(Math.max(0, 1 - expiryMs / maxMs).toFixed(4)) : 0.5,
-          capacityFitScore: c.maxCapacityKg && donation.quantityKg ? parseFloat(Math.min(1, donation.quantityKg / c.maxCapacityKg).toFixed(4)) : 0.5,
-          trustScoreUsed: c.trustScore ?? 0.5,
-          predictedSuccessProbability: 0.7,
-          modelVersion: 'v1.2',
-        }));
-        await matchRepo.createMany(records);
+      const result = await matchService.generateMatches(donation.id);
+      if (Array.isArray(result) && result.length > 0) {
         await donationRepo.updateStatus(donation.id, 'MATCHED');
         await donationRepo.createStatusLog({ donationId: donation.id, oldStatus: 'REPORTED', newStatus: 'MATCHED', changedBy: donorId });
         return donationRepo.findById(donation.id);

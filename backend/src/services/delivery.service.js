@@ -32,6 +32,7 @@ const startDelivery = async ({ donationId, recipientId }) => {
 const completeDelivery = async (deliveryId, userId) => {
   const delivery = await deliveryRepo.findById(deliveryId);
   if (!delivery) throw AppError.notFound('Delivery not found');
+  if (delivery.recipientId !== userId) throw AppError.forbidden('Not your delivery');
   if (delivery.completed) throw AppError.badRequest('Delivery already completed');
 
   const now = new Date();

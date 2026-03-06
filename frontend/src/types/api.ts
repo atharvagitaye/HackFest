@@ -34,6 +34,10 @@ export interface RegisterPayload {
   panDocumentUrl?: string;
   fssaiLicense?: string;
   fssaiDocumentUrl?: string;
+  address?: string;
+  latitude?: number;
+  longitude?: number;
+  maxCapacityKg?: number;
 }
 
 // ─── Organizations ────────────────────────────────────────────────────────────
@@ -101,7 +105,14 @@ export interface Match {
   modelVersion?: string;
   selected: boolean;
   createdAt: string;
-  recipient?: { id: string; name: string; email: string; trustScore: number };
+  recipient?: {
+    id: string;
+    name: string;
+    email: string;
+    phone?: string;
+    trustScore: number;
+    organization?: { name: string; address?: string; type: string };
+  };
   donation?: Donation & {
     donor?: { id: string; name: string };
     organization?: Organization;

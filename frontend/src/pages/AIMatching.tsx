@@ -1,46 +1,37 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
-import { Sparkles, MapPin, Shield, Clock, TrendingUp, RefreshCw, Star, Package } from "lucide-react";
+import { Sparkles, MapPin, RefreshCw, Star, Package, Mail, Phone, Building2 } from "lucide-react";
 import communityKitchen from "@/assets/community-kitchen.jpg";
 import { donationsApi, matchesApi } from "@/lib/api";
+import { useAuth } from "@/contexts/AuthContext";
 import { Match } from "@/types/api";
 
 const AIMatching = () => {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const [selectedDonationId, setSelectedDonationId] = useState<string>("");
 
-  const { data: donations = [] } = useQuery({
-    queryKey: ["donations"],
-    queryFn: () => donationsApi.list({ status: "REPORTED" }),
+  const { data: allDonations = [] } = useQuery({
+    queryKey: ["my-donations", user?.id],
+    queryFn: () => donationsApi.list({ donorId: user?.id }),
+    enabled: !!user?.id,
   });
+
+  // Show only donations that are in a state where matches are relevant
+  const donations = allDonations.filter(d =>
+    d.status === 'REPORTED' || d.status === 'MATCHED'
+  );
 
   const { data: matchesData = [], isLoading: matchesLoading } = useQuery({
     queryKey: ["matches", selectedDonationId],
     queryFn: () => matchesApi.getByDonation(selectedDonationId),
     enabled: !!selectedDonationId,
-  });
-
-  const acceptMutation = useMutation({
-    mutationFn: (matchId: string) => matchesApi.accept(matchId),
-    onSuccess: () => {
-      toast.success("Match accepted! The recipient will be notified.");
-      queryClient.invalidateQueries({ queryKey: ["matches", selectedDonationId] });
-      queryClient.invalidateQueries({ queryKey: ["donations"] });
-    },
-    onError: (err: Error) => toast.error(err.message ?? "Failed to accept match"),
-  });
-
-  const rejectMutation = useMutation({
-    mutationFn: (matchId: string) => matchesApi.reject(matchId),
-    onSuccess: () => {
-      toast.success("Match rejected.");
-      queryClient.invalidateQueries({ queryKey: ["matches", selectedDonationId] });
-    },
-    onError: (err: Error) => toast.error(err.message ?? "Failed to reject match"),
   });
 
   const recalculateMutation = useMutation({
@@ -90,7 +81,7 @@ const AIMatching = () => {
             <option value="">— Choose a donation —</option>
             {donations.map((d) => (
               <option key={d.id} value={d.id}>
-                {d.foodCategory ?? "Food Item"} — {d.quantityKg != null ? `${d.quantityKg} kg` : "qty unknown"}
+                {d.foodCategory ?? "Food Item"} — {d.quantityKg != null ? `${d.quantityKg} kg` : "qty unknown"} [{d.status}]
               </option>
             ))}
           </select>
@@ -176,20 +167,37 @@ const AIMatching = () => {
                           </div>
                         ))}
                       </div>
-                      <div className="flex gap-3">
-                        <Button
-                          onClick={() => acceptMutation.mutate(topMatch.id)}
-                          disabled={acceptMutation.isPending}
-                        >
-                          {acceptMutation.isPending ? "Accepting..." : "Accept Match"}
-                        </Button>
-                        <Button
-                          variant="outline"
-                          onClick={() => rejectMutation.mutate(topMatch.id)}
-                          disabled={rejectMutation.isPending}
-                        >
-                          Reject
-                        </Button>
+                      <div className="border-t border-border pt-4 mt-2">
+                        <p className="text-xs font-semibold text-primary uppercase tracking-widest mb-2">Contact Information</p>
+                        <div className="space-y-1.5 text-sm text-muted-foreground">
+                          {topMatch.recipient?.organization?.name && (
+                            <p className="flex items-center gap-2">
+                              <Building2 className="w-3.5 h-3.5 shrink-0" />
+                              {topMatch.recipient.organization.name}
+                              {topMatch.recipient.organization.type && (
+                                <span className="px-1.5 py-0.5 rounded bg-muted text-[10px] uppercase font-semibold">{topMatch.recipient.organization.type}</span>
+                              )}
+                            </p>
+                          )}
+                          {topMatch.recipient?.email && (
+                            <p className="flex items-center gap-2">
+                              <Mail className="w-3.5 h-3.5 shrink-0" />
+                              <a href={`mailto:${topMatch.recipient.email}`} className="underline hover:text-foreground">{topMatch.recipient.email}</a>
+                            </p>
+                          )}
+                          {topMatch.recipient?.phone && (
+                            <p className="flex items-center gap-2">
+                              <Phone className="w-3.5 h-3.5 shrink-0" />
+                              {topMatch.recipient.phone}
+                            </p>
+                          )}
+                          {topMatch.recipient?.organization?.address && (
+                            <p className="flex items-center gap-2">
+                              <MapPin className="w-3.5 h-3.5 shrink-0" />
+                              {topMatch.recipient.organization.address}
+                            </p>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -224,19 +232,31 @@ const AIMatching = () => {
                         <MapPin className="w-3 h-3" />
                         {match.distanceKm != null ? `${match.distanceKm.toFixed(1)} km` : "—"}
                       </p>
-                      <div className="flex flex-wrap gap-1.5 mb-4">
+                      <div className="flex flex-wrap gap-1.5 mb-3">
                         <span className="px-2 py-0.5 rounded-md bg-muted text-[10px] font-semibold text-muted-foreground uppercase">
                           TRUST {(match.recipient?.trustScore ?? 0).toFixed(1)}
                         </span>
                       </div>
-                      <Button
-                        variant="outline"
-                        className="w-full"
-                        onClick={() => acceptMutation.mutate(match.id)}
-                        disabled={acceptMutation.isPending}
-                      >
-                        Select Match
-                      </Button>
+                      <div className="border-t border-border pt-3 space-y-1 text-xs text-muted-foreground">
+                        {match.recipient?.organization?.name && (
+                          <p className="flex items-center gap-1.5">
+                            <Building2 className="w-3 h-3 shrink-0" />
+                            {match.recipient.organization.name}
+                          </p>
+                        )}
+                        {match.recipient?.email && (
+                          <p className="flex items-center gap-1.5">
+                            <Mail className="w-3 h-3 shrink-0" />
+                            <a href={`mailto:${match.recipient.email}`} className="underline hover:text-foreground truncate">{match.recipient.email}</a>
+                          </p>
+                        )}
+                        {match.recipient?.phone && (
+                          <p className="flex items-center gap-1.5">
+                            <Phone className="w-3 h-3 shrink-0" />
+                            {match.recipient.phone}
+                          </p>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>

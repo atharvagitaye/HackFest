@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Mail, Lock, Eye, EyeOff, Leaf, Building2, Phone, FileText, Upload } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, Leaf, Building2, Phone, FileText, Upload, MapPin, LocateFixed } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,11 +24,35 @@ const Register = () => {
     panDocumentUrl: "",
     fssaiLicense: "",
     fssaiDocumentUrl: "",
+    address: "",
+    maxCapacityKg: "",
   });
+  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [locLoading, setLocLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const detectLocation = () => {
+    if (!navigator.geolocation) {
+      toast.error('Geolocation is not supported by your browser.');
+      return;
+    }
+    setLocLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        setLocLoading(false);
+        toast.success('Location detected!');
+      },
+      () => {
+        setLocLoading(false);
+        toast.error('Unable to detect location. Please enter address manually.');
+      },
+      { timeout: 10000 }
+    );
+  };
 
   const set = (key: string) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm((p) => ({ ...p, [key]: e.target.value }));
@@ -51,7 +75,10 @@ const Register = () => {
     if (form.role === "donor" && !form.fssaiLicense.trim()) {
       errs.fssaiLicense = "FSSAI License is required for Donors";
     }
-    
+    if (!form.address.trim() && !coords) {
+      errs.address = "Please enter your address or detect your location";
+    }
+
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -76,6 +103,10 @@ const Register = () => {
         panDocumentUrl: form.panDocumentUrl || undefined,
         fssaiLicense: form.fssaiLicense || undefined,
         fssaiDocumentUrl: form.fssaiDocumentUrl || undefined,
+        address: form.address || undefined,
+        latitude: coords?.lat,
+        longitude: coords?.lng,
+        maxCapacityKg: form.maxCapacityKg ? parseFloat(form.maxCapacityKg) : undefined,
       });
       setAuth(token, user);
       toast.success('Account created! Verification pending from admin.');
@@ -179,6 +210,18 @@ const Register = () => {
                   {fieldError("panNumber")}
                 </div>
                 <div className="space-y-1.5">
+                  <Label htmlFor="maxCapacityKg">Maximum Food Capacity (kg) *</Label>
+                  <Input
+                    id="maxCapacityKg"
+                    type="number"
+                    min="1"
+                    placeholder="e.g. 200"
+                    value={form.maxCapacityKg}
+                    onChange={set("maxCapacityKg")}
+                  />
+                  <p className="text-xs text-muted-foreground">Maximum kg of food your organization can receive at once</p>
+                </div>
+                <div className="space-y-1.5">
                   <Label htmlFor="panDocumentUrl">PAN Document URL (Optional)</Label>
                   <div className="relative">
                     <Upload className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -234,6 +277,36 @@ const Register = () => {
                 </div>
               </>
             )}
+
+            {/* Address + Location */}
+            <div className="space-y-1.5">
+              <Label htmlFor="address">Organization Address</Label>
+              <div className="relative">
+                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  id="address"
+                  placeholder="123 Main St, City, State"
+                  value={form.address}
+                  onChange={set("address")}
+                  className="pl-10"
+                />
+              </div>
+              {fieldError("address")}
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="w-full mt-1"
+                onClick={detectLocation}
+                disabled={locLoading}
+              >
+                <LocateFixed className="w-4 h-4 mr-2" />
+                {locLoading ? "Detecting…" : coords ? `Location set (${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)})` : "Detect My Location"}
+              </Button>
+              <p className="text-xs text-muted-foreground">
+                Location is used to match you with nearby donors/recipients.
+              </p>
+            </div>
 
             {/* Password */}
             <div className="space-y-1.5">

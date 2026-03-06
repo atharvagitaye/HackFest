@@ -292,17 +292,20 @@ async function main() {
 
       // If donation progressed beyond REPORTED, create matches
       if (['MATCHED', 'ACCEPTED', 'PICKED_UP', 'DELIVERED'].includes(finalStatus)) {
-        // Generate 3 match candidates, select best one
+        // Generate up to 3 unique match candidates
+        const usedRecipients = new Set();
         const candidates = [];
-        for (let m = 0; m < 3; m++) {
-          const recipient = choice(recipientUsers);
+        const shuffled = [...recipientUsers].sort(() => Math.random() - 0.5);
+        for (const recipient of shuffled) {
+          if (usedRecipients.has(recipient.id)) continue;
+          usedRecipients.add(recipient.id);
           const distanceKm = rand(2, 25);
           const urgencyScore = rand(0.5, 1.0);
           const capacityFitScore = rand(0.6, 1.0);
           const trustScoreUsed = recipient.trustScore;
           const predictedSuccess = (urgencyScore * 0.4 + capacityFitScore * 0.3 + (1 - distanceKm / 25) * 0.3);
-
           candidates.push({ recipient, distanceKm, urgencyScore, capacityFitScore, trustScoreUsed, predictedSuccess });
+          if (candidates.length === 3) break;
         }
 
         // Sort by predicted success, pick best

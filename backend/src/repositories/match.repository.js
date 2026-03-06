@@ -6,7 +6,18 @@ const createMany = (records) =>
 const findByDonation = (donationId) =>
   prisma.match.findMany({
     where: { donationId },
-    include: { recipient: { select: { id: true, name: true, email: true, trustScore: true } } },
+    include: {
+      recipient: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          phone: true,
+          trustScore: true,
+          organization: { select: { name: true, address: true, type: true } },
+        },
+      },
+    },
     orderBy: { predictedSuccessProbability: 'desc' },
   });
 

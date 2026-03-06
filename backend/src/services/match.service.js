@@ -100,6 +100,9 @@ const scoreCandidates = (features) => mlClient.predictMatches(features);
  * Persist match results to DB.
  */
 const saveMatches = async (donationId, predictions) => {
+  // Delete stale matches first so recalculation replaces rather than appends
+  await prisma.match.deleteMany({ where: { donationId } });
+
   const records = predictions.map((p) => ({
     donationId,
     recipientId: p.recipientId,

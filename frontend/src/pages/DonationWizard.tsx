@@ -4,9 +4,8 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
-import LocationPicker from "@/components/shared/LocationPicker";
 import { Button } from "@/components/ui/button";
-import { Camera, Sparkles, ArrowRight, ArrowLeft, Lock, CheckCircle, MapPin, Loader2 } from "lucide-react";
+import { Camera, Sparkles, ArrowRight, ArrowLeft, Lock, CheckCircle } from "lucide-react";
 import { donationsApi } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -34,32 +33,6 @@ const DonationWizard = () => {
   const [quantityKg, setQuantityKg] = useState("");
   const [estimatedMeals, setEstimatedMeals] = useState("");
 
-  // Location fields (GPS or manual)
-  const [latitude, setLatitude] = useState("");
-  const [longitude, setLongitude] = useState("");
-  const [gpsLoading, setGpsLoading] = useState(false);
-
-  const handleGps = () => {
-    if (!navigator.geolocation) {
-      toast.error("Geolocation is not supported by your browser");
-      return;
-    }
-    setGpsLoading(true);
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setLatitude(pos.coords.latitude.toFixed(6));
-        setLongitude(pos.coords.longitude.toFixed(6));
-        setGpsLoading(false);
-        toast.success("Location detected!");
-      },
-      () => {
-        setGpsLoading(false);
-        toast.error("Could not get location. Please enter coordinates manually.");
-      },
-      { timeout: 10000 }
-    );
-  };
-
   // Step 3 fields
   const [expiryTime, setExpiryTime] = useState("");
   const [pickupDeadline, setPickupDeadline] = useState("");
@@ -68,7 +41,7 @@ const DonationWizard = () => {
 
   const steps = [
     { num: 1, title: "Photo & Name", desc: currentStep === 1 ? "Current Step" : currentStep > 1 ? "Complete" : "Incomplete" },
-    { num: 2, title: "Location & Meals", desc: currentStep === 2 ? "Current Step" : currentStep > 2 ? "Complete" : "Incomplete" },
+    { num: 2, title: "Quantity & Meals", desc: currentStep === 2 ? "Current Step" : currentStep > 2 ? "Complete" : "Incomplete" },
     { num: 3, title: "Expiry & Urgency", desc: currentStep === 3 ? "Current Step" : "Incomplete" },
   ];
 
@@ -82,8 +55,7 @@ const DonationWizard = () => {
         expiryTime: expiryTime ? new Date(expiryTime).toISOString() : undefined,
         pickupDeadline: pickupDeadline ? new Date(pickupDeadline).toISOString() : undefined,
         preparedAt: new Date().toISOString(),
-        latitude: latitude ? parseFloat(latitude) : undefined,
-        longitude: longitude ? parseFloat(longitude) : undefined,
+        // lat/lng are auto-inherited from the donor's organization on the backend
       }),
     onSuccess: async (donation) => {
       if (imageFile && donation?.id) {
@@ -247,8 +219,8 @@ const DonationWizard = () => {
             {/* Step 2 */}
             {currentStep === 2 && (
               <div className="card-elevated p-6">
-                <h2 className="text-lg font-semibold text-foreground mb-1">Step 2: Location & Meals</h2>
-                <p className="text-sm text-muted-foreground mb-5">Where can recipients pick up the donation?</p>
+                <h2 className="text-lg font-semibold text-foreground mb-1">Step 2: Quantity & Meals</h2>
+                <p className="text-sm text-muted-foreground mb-5">How much food, and how many meals will it provide?</p>
 
                 <div className="grid md:grid-cols-2 gap-6">
                   <div>
@@ -264,63 +236,8 @@ const DonationWizard = () => {
                   </div>
                 </div>
 
-                {/* Pickup Location */}
-                <div className="mt-6">
-                  <div className="flex items-center justify-between mb-2">
-                    <p className="text-sm font-medium text-foreground">Pickup Location</p>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={handleGps}
-                      disabled={gpsLoading}
-                    >
-                      {gpsLoading
-                        ? <><Loader2 className="w-3 h-3 mr-1 animate-spin" />Detecting...</>
-                        : <><MapPin className="w-3 h-3 mr-1" />Use My GPS Location</>}
-                    </Button>
-                  </div>
-                  
-                  {/* Interactive Map Picker */}
-                  <div className="mb-4">
-                    <p className="text-xs text-muted-foreground mb-2">Click on the map to set pickup location</p>
-                    <LocationPicker
-                      latitude={latitude ? parseFloat(latitude) : null}
-                      longitude={longitude ? parseFloat(longitude) : null}
-                      onLocationSelect={(lat, lng) => {
-                        setLatitude(lat.toFixed(6));
-                        setLongitude(lng.toFixed(6));
-                      }}
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <p className="text-xs text-muted-foreground mb-1">Latitude</p>
-                      <input
-                        type="number"
-                        step="any"
-                        value={latitude}
-                        onChange={(e) => setLatitude(e.target.value)}
-                        placeholder="e.g. 19.0596"
-                        className="w-full bg-muted rounded-lg px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-primary/30"
-                      />
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground mb-1">Longitude</p>
-                      <input
-                        type="number"
-                        step="any"
-                        value={longitude}
-                        onChange={(e) => setLongitude(e.target.value)}
-                        placeholder="e.g. 72.8294"
-                        className="w-full bg-muted rounded-lg px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-primary/30"
-                      />
-                    </div>
-                  </div>
-                  {latitude && longitude && (
-                    <p className="text-xs text-success mt-1">📍 Location set: {parseFloat(latitude).toFixed(4)}, {parseFloat(longitude).toFixed(4)}</p>
-                  )}
+                <div className="mt-4 p-3 rounded-lg bg-secondary/50 border border-border">
+                  <p className="text-xs text-muted-foreground">📍 Pickup location is automatically set to your registered organization address. Recipients nearby will be matched to this donation.</p>
                 </div>
               </div>
             )}
@@ -358,7 +275,7 @@ const DonationWizard = () => {
             {currentStep < 2 && (
               <div className="card-elevated p-6 opacity-50">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-lg font-semibold text-muted-foreground">Step 2: Location & Meals</h2>
+                  <h2 className="text-lg font-semibold text-muted-foreground">Step 2: Quantity & Meals</h2>
                   <Lock className="w-5 h-5 text-muted-foreground" />
                 </div>
               </div>
