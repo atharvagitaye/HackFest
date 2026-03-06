@@ -84,6 +84,16 @@ const AdminDashboard = () => {
     queryFn: adminApi.getPendingKYC,
   });
 
+  const { data: geoData = [] } = useQuery({
+    queryKey: ["admin-geo-heatmap"],
+    queryFn: adminApi.getGeoHeatmap,
+  });
+
+  const { data: wasteReport } = useQuery({
+    queryKey: ["admin-waste-report"],
+    queryFn: adminApi.getWasteReport,
+  });
+
   /* ── Mutations ── */
   const verifyMutation = useMutation({
     mutationFn: ({ id, verified }: { id: string; verified: boolean }) =>
@@ -254,88 +264,256 @@ const AdminDashboard = () => {
               <Badge variant="destructive">{pendingKYC.length} Pending</Badge>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-4">
               {pendingKYC.map((user: any) => (
-                <div key={user.id} className="bg-card border border-border rounded-lg p-4">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <h4 className="font-semibold text-foreground">{user.name}</h4>
-                        <Badge variant={user.role === 'DONOR' ? 'default' : 'secondary'}>
-                          {user.role}
-                        </Badge>
+                <div key={user.id} className="bg-card border border-border rounded-xl overflow-hidden shadow-sm">
+                  {/* Header strip */}
+                  <div className={`px-5 py-3 flex items-center justify-between ${user.role === 'DONOR' ? 'bg-blue-500/10 border-b border-blue-500/20' : 'bg-amber-500/10 border-b border-amber-500/20'}`}>
+                    <div className="flex items-center gap-3">
+                      <div className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm text-white ${user.role === 'DONOR' ? 'bg-blue-500' : 'bg-amber-500'}`}>
+                        {user.name?.charAt(0)?.toUpperCase() ?? '?'}
                       </div>
-                      <p className="text-sm text-muted-foreground mb-3">{user.email}</p>
-                      
-                      {user.role === 'RECIPIENT' && user.panNumber && (
-                        <div className="space-y-1 mb-2">
-                          <p className="text-xs font-medium text-foreground">PAN Number:</p>
-                          <p className="text-sm font-mono text-muted-foreground">{user.panNumber}</p>
-                          {user.panDocumentUrl && (
-                            <a 
-                              href={user.panDocumentUrl} 
-                              target="_blank" 
-                              rel="noopener noreferrer"
-                              className="text-xs text-primary hover:underline flex items-center gap-1"
-                            >
-                              <Eye className="w-3 h-3" />
-                              View Document
-                            </a>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h4 className="font-semibold text-foreground">{user.name}</h4>
+                          <Badge variant={user.role === 'DONOR' ? 'default' : 'secondary'} className="text-xs">
+                            {user.role}
+                          </Badge>
+                          {user.verificationStatus && (
+                            <Badge variant="outline" className="text-xs text-orange-600 border-orange-300 bg-orange-50">
+                              {user.verificationStatus}
+                            </Badge>
                           )}
                         </div>
-                      )}
-                      
-                      {user.role === 'DONOR' && user.fssaiLicense && (
-                        <div className="space-y-1 mb-2">
-                          <p className="text-xs font-medium text-foreground">FSSAI License:</p>
-                          <p className="text-sm font-mono text-muted-foreground">{user.fssaiLicense}</p>
-                          {user.fssaiDocumentUrl && (
-                            <a 
-                              href={user.fssaiDocumentUrl} 
-                              target="_blank" 
-                              rel="noopener noreferrer"
-                              className="text-xs text-primary hover:underline flex items-center gap-1"
-                            >
-                              <Eye className="w-3 h-3" />
-                              View Document
-                            </a>
-                          )}
-                        </div>
-                      )}
-                      
-                      {user.organization && (
-                        <p className="text-xs text-muted-foreground">
-                          Org: {user.organization.name} ({user.organization.type})
-                        </p>
-                      )}
+                        <p className="text-xs text-muted-foreground">{user.email}</p>
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground hidden sm:block">
+                      Registered: {user.createdAt ? new Date(user.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
+                    </p>
+                  </div>
+
+                  <div className="p-5 grid gap-4 md:grid-cols-2">
+                    {/* Identity Documents */}
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">Identity Documents</p>
+                      <div className="space-y-2">
+                        {/* DONOR → FSSAI License only */}
+                        {user.role === 'DONOR' && (
+                          <div className={`rounded-lg border px-3 py-2 ${user.fssaiLicense ? 'bg-green-50 border-green-200' : 'bg-muted/40 border-dashed border-muted-foreground/30'}`}>
+                            <p className="text-xs text-muted-foreground font-medium mb-0.5">FSSAI License Number</p>
+                            {user.fssaiLicense ? (
+                              <div className="flex items-center gap-2">
+                                <p className="font-mono font-bold text-sm tracking-widest text-foreground">{user.fssaiLicense}</p>
+                                {user.fssaiDocumentUrl ? (
+                                  <a
+                                    href={user.fssaiDocumentUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="ml-auto flex items-center gap-1 text-xs text-primary hover:underline shrink-0"
+                                  >
+                                    <Eye className="w-3 h-3" />
+                                    View
+                                  </a>
+                                ) : (
+                                  <span className="ml-auto text-xs text-orange-500 shrink-0">No doc uploaded</span>
+                                )}
+                              </div>
+                            ) : (
+                              <p className="text-xs italic text-muted-foreground">Not provided</p>
+                            )}
+                          </div>
+                        )}
+
+                        {/* RECIPIENT / NGO → Government ID (PAN) only */}
+                        {user.role === 'RECIPIENT' && (
+                          <div className={`rounded-lg border px-3 py-2 ${user.panNumber ? 'bg-green-50 border-green-200' : 'bg-muted/40 border-dashed border-muted-foreground/30'}`}>
+                            <p className="text-xs text-muted-foreground font-medium mb-0.5">Government ID (PAN Number)</p>
+                            {user.panNumber ? (
+                              <div className="flex items-center gap-2">
+                                <p className="font-mono font-bold text-sm tracking-widest text-foreground">{user.panNumber}</p>
+                                {user.panDocumentUrl ? (
+                                  <a
+                                    href={user.panDocumentUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="ml-auto flex items-center gap-1 text-xs text-primary hover:underline shrink-0"
+                                  >
+                                    <Eye className="w-3 h-3" />
+                                    View
+                                  </a>
+                                ) : (
+                                  <span className="ml-auto text-xs text-orange-500 shrink-0">No doc uploaded</span>
+                                )}
+                              </div>
+                            ) : (
+                              <p className="text-xs italic text-muted-foreground">Not provided</p>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </div>
 
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        variant="default"
-                        onClick={() => kycMutation.mutate({ userId: user.id, status: 'APPROVED' })}
-                        disabled={kycMutation.isPending}
-                      >
-                        <CheckCircle className="w-4 h-4 mr-1" />
-                        Approve
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="destructive"
-                        onClick={() => {
-                          const notes = prompt("Reason for rejection (optional):");
-                          kycMutation.mutate({ userId: user.id, status: 'REJECTED', notes: notes || undefined });
-                        }}
-                        disabled={kycMutation.isPending}
-                      >
-                        <ShieldX className="w-4 h-4 mr-1" />
-                        Reject
-                      </Button>
+                    {/* Organization & Actions */}
+                    <div className="flex flex-col gap-3">
+                      {/* Org Info */}
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">Organization</p>
+                        {user.organization ? (
+                          <div className="rounded-lg border bg-muted/30 px-3 py-2 space-y-0.5">
+                            <p className="font-medium text-sm text-foreground">{user.organization.name}</p>
+                            <div className="flex items-center gap-2">
+                              <Badge variant="outline" className="text-xs">{user.organization.type}</Badge>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="rounded-lg border border-dashed bg-muted/20 px-3 py-2">
+                            <p className="text-xs italic text-muted-foreground">No organization linked</p>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* User ID for reference */}
+                      <div className="text-xs text-muted-foreground font-mono bg-muted/30 rounded px-2 py-1">
+                        ID: {user.id}
+                      </div>
+
+                      {/* Action Buttons */}
+                      <div className="flex gap-2 mt-auto">
+                        <Button
+                          size="sm"
+                          variant="default"
+                          className="flex-1 bg-green-600 hover:bg-green-700"
+                          onClick={() => kycMutation.mutate({ userId: user.id, status: 'APPROVED' })}
+                          disabled={kycMutation.isPending}
+                        >
+                          <CheckCircle className="w-4 h-4 mr-1" />
+                          Approve
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          className="flex-1"
+                          onClick={() => {
+                            const notes = prompt("Reason for rejection (optional):");
+                            kycMutation.mutate({ userId: user.id, status: 'REJECTED', notes: notes || undefined });
+                          }}
+                          disabled={kycMutation.isPending}
+                        >
+                          <ShieldX className="w-4 h-4 mr-1" />
+                          Reject
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* Expiry / Waste Report */}
+        {wasteReport && (
+          <div className="card-elevated p-6 mb-8 border-2 border-destructive/30 bg-destructive/5">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h3 className="font-semibold text-foreground flex items-center gap-2">
+                  <AlertCircle className="w-5 h-5 text-destructive" />
+                  Expiry & Waste Report
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  Donations that expired before pickup
+                </p>
+              </div>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-4 mb-6">
+              <div className="bg-card border border-border rounded-lg p-4">
+                <p className="text-xs text-muted-foreground font-medium mb-1">Total Expired</p>
+                <p className="text-2xl font-bold text-foreground">{wasteReport.summary.totalExpired}</p>
+              </div>
+              <div className="bg-card border border-border rounded-lg p-4">
+                <p className="text-xs text-muted-foreground font-medium mb-1">Kg Wasted</p>
+                <p className="text-2xl font-bold text-destructive">{wasteReport.summary.totalKgWasted.toFixed(1)} kg</p>
+              </div>
+              <div className="bg-card border border-border rounded-lg p-4">
+                <p className="text-xs text-muted-foreground font-medium mb-1">Meals Wasted</p>
+                <p className="text-2xl font-bold text-destructive">{wasteReport.summary.totalMealsWasted}</p>
+              </div>
+            </div>
+
+            {Object.entries(wasteReport.byType).length > 0 && (
+              <div className="mb-4">
+                <h4 className="font-semibold text-sm mb-3">Waste by Organization Type</h4>
+                <div className="space-y-2">
+                  {Object.entries(wasteReport.byType).map(([type, data]: [string, any]) => (
+                    <div key={type} className="flex items-center justify-between bg-muted/30 rounded px-3 py-2">
+                      <span className="font-medium text-sm">{type}</span>
+                      <div className="flex gap-4 text-xs text-muted-foreground">
+                        <span>{data.count} donations</span>
+                        <span>{data.kgWasted.toFixed(1)} kg</span>
+                        <span>{data.mealsWasted} meals</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {wasteReport.recentExpired?.length > 0 && (
+              <div>
+                <h4 className="font-semibold text-sm mb-3">Recent Expired Donations (Last 20)</h4>
+                <div className="space-y-2 max-h-64 overflow-y-auto">
+                  {wasteReport.recentExpired.slice(0, 10).map((d: any) => (
+                    <div key={d.id} className="bg-card border border-border rounded p-3 text-sm">
+                      <div className="flex justify-between items-start mb-1">
+                        <span className="font-medium">{d.foodCategory || 'Unknown'}</span>
+                        <span className="text-xs text-muted-foreground">{d.quantityKg || 0} kg</span>
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {d.organization?.name} • Expired: {new Date(d.expiryTime).toLocaleDateString('en-IN')}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Geo Heatmap */}
+        {geoData.length > 0 && (
+          <div className="card-elevated p-6 mb-8">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h3 className="font-semibold text-foreground">Donation Heatmap</h3>
+                <p className="text-sm text-muted-foreground">
+                  Geographic distribution of {geoData.length} donations
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-muted/30 rounded-lg p-4">
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-96 overflow-y-auto">
+                {geoData.slice(0, 50).map((d: any) => (
+                  <div key={d.id} className="bg-card border border-border rounded p-3 text-xs">
+                    <div className="flex justify-between items-start mb-1">
+                      <span className="font-medium text-sm">{d.organization?.name || 'Unknown'}</span>
+                      <Badge variant={d.status === 'DELIVERED' ? 'default' : 'secondary'} className="text-xs">
+                        {d.status}
+                      </Badge>
+                    </div>
+                    <div className="text-muted-foreground space-y-0.5">
+                      <div>📍 {d.latitude?.toFixed(4)}, {d.longitude?.toFixed(4)}</div>
+                      <div>{d.quantityKg || 0} kg • {d.organization?.type}</div>
+                      <div className="text-xs opacity-70">{new Date(d.createdAt).toLocaleDateString('en-IN')}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground mt-3 text-center">
+                Showing first 50 of {geoData.length} donations with location data
+              </p>
             </div>
           </div>
         )}

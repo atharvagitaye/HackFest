@@ -258,7 +258,18 @@ const RecipientMatches = () => {
                     </div>
 
                     {/* Right: action buttons */}
-                    <div className="flex items-center gap-2 shrink-0">
+                    <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                      {/* View Details - always visible */}
+                      {m.donation?.id && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => navigate(`/donations/${m.donation.id}`)}
+                        >
+                          <Package className="w-4 h-4 mr-1" /> View Details
+                        </Button>
+                      )}
+
                       {status === "MATCHED" && (
                         <>
                           <Button

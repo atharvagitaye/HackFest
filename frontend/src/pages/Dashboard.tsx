@@ -94,7 +94,11 @@ const DonorDashboard = ({ impact, liveMarkers }: { impact: any; liveMarkers: any
           ) : (
             <div className="space-y-3">
               {active.slice(0, 5).map((d) => (
-                <div key={d.id} className="flex items-center justify-between gap-2 p-3 bg-muted/40 rounded-lg">
+                <div 
+                  key={d.id} 
+                  className="flex items-center justify-between gap-2 p-3 bg-muted/40 rounded-lg hover:bg-muted/60 cursor-pointer transition-colors"
+                  onClick={() => navigate(`/donations/${d.id}`)}
+                >
                   <div className="min-w-0">
                     <p className="text-sm font-medium text-foreground capitalize truncate">{d.foodCategory ?? "Food Item"}</p>
                     <p className="text-xs text-muted-foreground">{d.quantityKg} kg · {d.status}</p>

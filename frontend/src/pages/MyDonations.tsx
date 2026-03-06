@@ -100,6 +100,14 @@ function DonationRow({ donation, onCancel }: { donation: Donation; onCancel: (id
 
       {/* Actions */}
       <div className="flex items-center gap-2 flex-wrap">
+        <Button
+          size="sm"
+          variant="default"
+          className="h-7 text-xs"
+          onClick={() => navigate(`/donations/${donation.id}`)}
+        >
+          <Package className="w-3 h-3 mr-1" /> View Details
+        </Button>
         {isActive && (
           <Button
             size="sm"

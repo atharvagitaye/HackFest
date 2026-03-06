@@ -7,12 +7,13 @@ import Footer from "@/components/layout/Footer";
 import MapWidget from "@/components/shared/MapWidget";
 import RatingModal from "@/components/shared/RatingModal";
 import QRCodeDisplay from "@/components/qr/QRCodeDisplay";
+import { ReportDisputeButton } from "@/components/ReportDisputeButton";
 import { Button } from "@/components/ui/button";
 import { deliveriesApi } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   Headphones, Share2, Star, Truck, Package, Sparkles,
-  Megaphone, Handshake, CheckCircle, Clock,
+  Megaphone, Handshake, CheckCircle, Clock, MapPin,
 } from "lucide-react";
 import { Delivery } from "@/types/api";
 
@@ -71,7 +72,33 @@ const DeliveryTracking = () => {
       <div className="min-h-screen bg-background">
         <Navbar />
         <main className="container py-8">
-          <h1 className="text-3xl font-bold text-foreground mb-6">My Deliveries</h1>
+          <div className="flex items-center justify-between mb-6">
+            <h1 className="text-3xl font-bold text-foreground">My Deliveries</h1>
+            {user?.role === 'RECIPIENT' && deliveries.filter(d => d.status === 'PENDING_PICKUP' || d.status === 'ACCEPTED').length > 0 && (
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  const pendingPickups = deliveries.filter(d => 
+                    (d.status === 'PENDING_PICKUP' || d.status === 'ACCEPTED') && 
+                    d.donation?.latitude && 
+                    d.donation?.longitude
+                  );
+                  if (pendingPickups.length === 0) {
+                    toast.error('No pickups with location data available');
+                    return;
+                  }
+                  const waypoints = pendingPickups.map(d => 
+                    `${d.donation!.latitude},${d.donation!.longitude}`
+                  ).join('|');
+                  const url = `https://www.google.com/maps/dir/?api=1&waypoints=${waypoints}&travelmode=driving`;
+                  window.open(url, '_blank');
+                }}
+              >
+                <MapPin className="w-4 h-4 mr-2" />
+                View Route
+              </Button>
+            )}
+          </div>
           {listLoading ? (
             <div className="space-y-4">
               {Array.from({ length: 3 }).map((_, i) => (
@@ -140,6 +167,23 @@ const DeliveryTracking = () => {
   const canComplete =
     delivery.donation?.status === "PICKED_UP" && !delivery.completed && user?.role === "RECIPIENT";
 
+  // Build markers for map
+  const markers = [];
+  if (delivery.donation) {
+    const lat = delivery.donation.latitude ?? delivery.donation.organization?.latitude;
+    const lng = delivery.donation.longitude ?? delivery.donation.organization?.longitude;
+    if (lat && lng) {
+      markers.push({
+        id: 1,
+        type: 'donation',
+        name: delivery.donation.organization?.name || 'Pickup Location',
+        lat,
+        lng,
+        status: delivery.donation.status,
+      });
+    }
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -170,6 +214,7 @@ const DeliveryTracking = () => {
           </div>
           <div className="flex gap-3">
             <Button variant="outline"><Headphones className="w-4 h-4 mr-2" />Support</Button>
+            <ReportDisputeButton deliveryId={delivery.id} />
             {canComplete && (
               <Button
                 onClick={() => completeMutation.mutate()}
@@ -224,7 +269,7 @@ const DeliveryTracking = () => {
             <div className="flex items-center gap-2 mb-3">
               <span className="text-xs font-semibold text-primary uppercase">LIVE LOCATION</span>
             </div>
-            <MapWidget markers={[]} />
+            <MapWidget markers={markers} />
           </div>
 
           <div className="space-y-4">

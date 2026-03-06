@@ -9,7 +9,6 @@ import type {
   Delivery,
   ImpactSummary,
   DailyImpactPoint,
-  UserImpact,
   TrustMetric,
   NearbyRecipient,
   Rating,
@@ -17,6 +16,7 @@ import type {
   AdminUser,
   AdminStats,
   LeaderboardEntry,
+  StatusLog,
 } from '@/types/api';
 
 const BASE = '/api/v1';
@@ -97,6 +97,25 @@ export const donationsApi = {
       return json.data as { id: string; imageUrl: string };
     });
   },
+
+  exportCSV: () => {
+    const token = getToken();
+    return fetch(`${BASE}/donations/export/csv`, {
+      method: 'GET',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    }).then(async (res) => {
+      if (!res.ok) throw new Error(`Export failed (${res.status})`);
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `donations_${Date.now()}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    });
+  },
 };
 
 // ─── Matches ──────────────────────────────────────────────────────────────────
@@ -136,6 +155,29 @@ export const deliveriesApi = {
     req<Delivery>('GET', `/deliveries/qr/${token}`),
 };
 
+// ─── Disputes ─────────────────────────────────────────────────────────────────
+export const disputesApi = {
+  create: (deliveryId: string, category: string, description: string) =>
+    req<any>('POST', '/disputes', { deliveryId, category, description }),
+
+  getMine: () => req<any[]>('GET', '/disputes/mine'),
+
+  getById: (id: string) => req<any>('GET', `/disputes/${id}`),
+
+  listAll: (params?: { status?: string; category?: string }) => {
+    const qs = params
+      ? '?' + new URLSearchParams(Object.entries(params).filter(([, v]) => v) as [string, string][]).toString()
+      : '';
+    return req<any[]>('GET', `/disputes${qs}`);
+  },
+
+  resolve: (id: string, resolution: string) =>
+    req<any>('PATCH', `/disputes/${id}/resolve`, { resolution }),
+
+  dismiss: (id: string, resolution: string) =>
+    req<any>('PATCH', `/disputes/${id}/dismiss`, { resolution }),
+};
+
 // ─── Ratings ──────────────────────────────────────────────────────────────────
 export const ratingsApi = {
   submit: (payload: SubmitRatingPayload) =>
@@ -165,6 +207,8 @@ export const adminApi = {
   getPendingKYC: () => req<User[]>('GET', '/admin/kyc/pending'),
   updateKYCStatus: (userId: string, status: 'APPROVED' | 'REJECTED', notes?: string) =>
     req<User>('PATCH', `/admin/kyc/${userId}`, { status, notes }),
+  getGeoHeatmap: () => req<any[]>('GET', '/admin/geo-heatmap'),
+  getWasteReport: () => req<any>('GET', '/admin/waste-report'),
 };
 
 // ─── Impact ───────────────────────────────────────────────────────────────────
@@ -172,7 +216,7 @@ export const impactApi = {
   summary: () => req<ImpactSummary>('GET', '/impact/summary'),
   daily: (days?: number) =>
     req<DailyImpactPoint[]>('GET', `/impact/daily${days ? `?days=${days}` : ''}`),
-  myImpact: () => req<UserImpact>('GET', '/impact/my'),
+  myImpact: () => req<ImpactSummary>('GET', '/impact/my'),
   leaderboard: (params?: { type?: 'donors' | 'recipients'; period?: 'all' | 'weekly' | 'monthly'; limit?: number }) => {
     const qs = params
       ? '?' + new URLSearchParams(Object.entries(params).filter(([, v]) => v !== undefined).map(([k, v]) => [k, String(v)])).toString()

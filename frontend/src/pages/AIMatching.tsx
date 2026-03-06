@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
-import { Sparkles, MapPin, Shield, Clock, TrendingUp, RefreshCw, Star } from "lucide-react";
+import { Sparkles, MapPin, Shield, Clock, TrendingUp, RefreshCw, Star, Package } from "lucide-react";
 import communityKitchen from "@/assets/community-kitchen.jpg";
 import { donationsApi, matchesApi } from "@/lib/api";
 import { Match } from "@/types/api";
@@ -94,6 +94,16 @@ const AIMatching = () => {
               </option>
             ))}
           </select>
+          {selectedDonationId && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate(`/donations/${selectedDonationId}`)}
+            >
+              <Package className="w-4 h-4 mr-2" />
+              View Donation Details
+            </Button>
+          )}
         </div>
 
         {/* Tabs */}

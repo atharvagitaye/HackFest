@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
+import LocationPicker from "@/components/shared/LocationPicker";
 import { Button } from "@/components/ui/button";
 import { Camera, Sparkles, ArrowRight, ArrowLeft, Lock, CheckCircle, MapPin, Loader2 } from "lucide-react";
 import { donationsApi } from "@/lib/api";
@@ -279,6 +280,20 @@ const DonationWizard = () => {
                         : <><MapPin className="w-3 h-3 mr-1" />Use My GPS Location</>}
                     </Button>
                   </div>
+                  
+                  {/* Interactive Map Picker */}
+                  <div className="mb-4">
+                    <p className="text-xs text-muted-foreground mb-2">Click on the map to set pickup location</p>
+                    <LocationPicker
+                      latitude={latitude ? parseFloat(latitude) : null}
+                      longitude={longitude ? parseFloat(longitude) : null}
+                      onLocationSelect={(lat, lng) => {
+                        setLatitude(lat.toFixed(6));
+                        setLongitude(lng.toFixed(6));
+                      }}
+                    />
+                  </div>
+
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <p className="text-xs text-muted-foreground mb-1">Latitude</p>

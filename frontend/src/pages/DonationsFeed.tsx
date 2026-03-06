@@ -9,7 +9,7 @@ import QRScanner from "@/components/qr/QRScanner";
 import { donationsApi, matchesApi, deliveriesApi } from "@/lib/api";
 import { Donation, Match, Delivery } from "@/types/api";
 import { Button } from "@/components/ui/button";
-import { Plus, Package, MapPin, X, Check, Truck, ClipboardList, Search, Star, Clock, Scan } from "lucide-react";
+import { Plus, Package, MapPin, X, Check, Truck, ClipboardList, Search, Star, Clock, Scan, Download } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
 import foodBakery from "@/assets/food-bakery.jpg";
@@ -317,9 +317,16 @@ const DonationsFeed = () => {
                 </Button>
               )}
               {user?.role === "DONOR" && (
-                <Button onClick={() => navigate("/donate")}>
-                  <Plus className="w-4 h-4 mr-2" />Post Donation
-                </Button>
+                <>
+                  <Button variant="outline" onClick={() => {
+                    donationsApi.exportCSV().then(() => toast.success('CSV exported successfully')).catch((err) => toast.error(err.message || 'Export failed'));
+                  }}>
+                    <Download className="w-4 h-4 mr-2" />Export CSV
+                  </Button>
+                  <Button onClick={() => navigate("/donate")}>
+                    <Plus className="w-4 h-4 mr-2" />Post Donation
+                  </Button>
+                </>
               )}
             </div>
           </div>
@@ -429,11 +436,20 @@ const DonationsFeed = () => {
                         </div>
                       )}
                     </div>
-                    {user?.role === "DONOR" &&
-                      donation.status !== "DELIVERED" &&
-                      donation.status !== "CANCELLED" &&
-                      donation.status !== "EXPIRED" && (
-                        <div className="mt-3 flex justify-end">
+                    <div className="mt-3 flex justify-between items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-7 px-2 text-xs"
+                        onClick={() => navigate(`/donations/${donation.id}`)}
+                      >
+                        <Package className="w-3 h-3 mr-1" />
+                        View Details
+                      </Button>
+                      {user?.role === "DONOR" &&
+                        donation.status !== "DELIVERED" &&
+                        donation.status !== "CANCELLED" &&
+                        donation.status !== "EXPIRED" && (
                           <Button
                             variant="ghost"
                             size="sm"
@@ -444,8 +460,8 @@ const DonationsFeed = () => {
                             <X className="w-3 h-3 mr-1" />
                             Cancel
                           </Button>
-                        </div>
-                      )}
+                        )}
+                    </div>
                   </div>
                 </div>
               );
