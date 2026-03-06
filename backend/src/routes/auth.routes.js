@@ -3,7 +3,7 @@ const { z } = require('zod');
 const authController = require('../controllers/auth.controller');
 const validate = require('../middlewares/validate');
 const { requireAuth } = require('../middlewares/auth');
-const { authLimiter } = require('../middlewares/rateLimiter');
+
 
 const router = Router();
 
@@ -55,7 +55,7 @@ const loginSchema = z.object({
  *       201:
  *         description: User registered successfully
  */
-router.post('/register', authLimiter, validate(registerSchema), authController.register);
+router.post('/register', validate(registerSchema), authController.register);
 
 /**
  * @swagger
@@ -77,7 +77,7 @@ router.post('/register', authLimiter, validate(registerSchema), authController.r
  *       200:
  *         description: Login successful
  */
-router.post('/login', authLimiter, validate(loginSchema), authController.login);
+router.post('/login', validate(loginSchema), authController.login);
 
 /**
  * @swagger

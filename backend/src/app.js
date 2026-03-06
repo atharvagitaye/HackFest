@@ -10,7 +10,6 @@ const routes = require('./routes');
 const errorHandler = require('./middlewares/errorHandler');
 const swaggerSpec = require('./config/swagger');
 const config = require('./config/env');
-const { apiLimiter } = require('./middlewares/rateLimiter');
 
 const path = require('path');
 const app = express();
@@ -28,9 +27,6 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 if (config.nodeEnv !== 'test') {
   app.use(morgan(config.nodeEnv === 'development' ? 'dev' : 'combined'));
 }
-
-// ── Global Rate Limiting ──────────────────────────────────────────────────────
-app.use('/api/', apiLimiter);
 
 // ── Swagger Docs ──────────────────────────────────────────────────────────────
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));

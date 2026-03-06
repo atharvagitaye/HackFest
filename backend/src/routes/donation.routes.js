@@ -4,7 +4,7 @@ const donationController = require('../controllers/donation.controller');
 const { requireAuth, requireRole } = require('../middlewares/auth');
 const validate = require('../middlewares/validate');
 const upload = require('../middlewares/upload');
-const { donationCreateLimiter } = require('../middlewares/rateLimiter');
+
 
 const router = Router();
 
@@ -63,7 +63,7 @@ const addImageSchema = z.object({
  *       201:
  *         description: Donation created
  */
-router.post('/', requireAuth, requireRole('DONOR'), donationCreateLimiter, validate(createDonationSchema), donationController.create);
+router.post('/', requireAuth, requireRole('DONOR'), validate(createDonationSchema), donationController.create);
 
 /**
  * @swagger

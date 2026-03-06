@@ -236,12 +236,12 @@ async function main() {
   const allDeliveries = [];
   const allRatings = [];
 
-  for (let daysBack = 30; daysBack >= 0; daysBack--) {
+  for (let daysBack = 14; daysBack >= 0; daysBack--) {
     const targetDate = daysAgo(daysBack, 0);
     const dayMultiplier = getDayMultiplier(targetDate);
     
-    // Number of donations for this day (adjusted by day-of-week pattern)
-    const baseDonations = daysBack === 0 ? 5 : randInt(3, 8);
+    // Reduced: 2-3 donations per day max (was 3-8)
+    const baseDonations = daysBack === 0 ? 3 : randInt(1, 3);
     const donationsToday = Math.round(baseDonations * dayMultiplier);
 
     for (let i = 0; i < donationsToday; i++) {
@@ -257,16 +257,16 @@ async function main() {
       const quantityKg = randInt(10, 200);
       const estimatedMeals = quantityKg * 2;
 
-      // For past donations, 80% should be completed, 10% cancelled, 10% expired
+      // For past donations: 75% DELIVERED, 10% CANCELLED, 15% still REPORTED (expired = waste)
       let finalStatus;
       if (daysBack === 0) {
         // Today's donations: mix of current states
         finalStatus = choice(['REPORTED', 'MATCHED', 'ACCEPTED', 'PICKED_UP']);
       } else {
         const statusRoll = Math.random();
-        if (statusRoll < 0.8) finalStatus = 'DELIVERED';
-        else if (statusRoll < 0.9) finalStatus = 'CANCELLED';
-        else finalStatus = 'EXPIRED';
+        if (statusRoll < 0.75) finalStatus = 'DELIVERED';
+        else if (statusRoll < 0.85) finalStatus = 'CANCELLED';
+        else finalStatus = 'REPORTED'; // Expired/wasted - stays as REPORTED with past expiryTime
       }
 
       const donation = await prisma.donation.create({
@@ -389,9 +389,8 @@ async function main() {
       } else if (finalStatus === 'CANCELLED') {
         const cancelTime = new Date(preparedTime.getTime() + randInt(60, 300) * 60000);
         await logStatus(donation.id, 'REPORTED', 'CANCELLED', donor.id, cancelTime);
-      } else if (finalStatus === 'EXPIRED') {
-        await logStatus(donation.id, 'REPORTED', 'EXPIRED', admin.id, expiryTime);
       }
+      // else: REPORTED with past expiryTime = wasted donation (caught by waste report query)
     }
   }
 
@@ -458,8 +457,8 @@ async function main() {
     },
   });
 
-  // Daily impact for last 30 days
-  for (let i = 29; i >= 0; i--) {
+  // Daily impact for last 14 days
+  for (let i = 13; i >= 0; i--) {
     const date = daysAgo(i, 0);
     date.setHours(0, 0, 0, 0);
     
@@ -505,7 +504,7 @@ async function main() {
   console.log(`\n📊 STATISTICS:`);
   console.log(`   Organizations: ${donorOrgs.length + recipientOrgs.length} (${donorOrgs.length} donors, ${recipientOrgs.length} recipients)`);
   console.log(`   Users: ${donorUsers.length + recipientUsers.length + 1} (1 admin, ${donorUsers.length} donors, ${recipientUsers.length} recipients)`);
-  console.log(`   Donations: ${allDonations.length} (spanning 30+ days)`);
+  console.log(`   Donations: ${allDonations.length} (spanning 14 days)`);
   console.log(`   Completed Deliveries: ${allDeliveries.length}`);
   console.log(`   Ratings: ${allRatings.length}`);
   console.log(`   Total Food Saved: ${Math.round(totalKgSaved)}kg (${Math.round(totalMealsServed)} meals)`);
