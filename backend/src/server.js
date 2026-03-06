@@ -1,13 +1,27 @@
 const app = require('./app');
 const config = require('./config/env');
 const prisma = require('./config/prisma');
+const donationRepo = require('./repositories/donation.repository');
 
 const PORT = config.port;
+
+/** Expire stale donations every 5 minutes */
+const startExpiryCron = () => {
+  setInterval(async () => {
+    try {
+      const result = await donationRepo.expireStale();
+      if (result.count > 0) console.log(`[cron] Expired ${result.count} stale donation(s)`);
+    } catch (err) {
+      console.error('[cron] Expiry job failed:', err.message);
+    }
+  }, 5 * 60 * 1000); // every 5 min
+};
 
 const start = async () => {
   try {
     await prisma.$connect();
     console.log('✅ Database connected');
+    startExpiryCron();
 
     app.listen(PORT, () => {
       console.log(`🚀 Server running on port ${PORT} [${config.nodeEnv}]`);

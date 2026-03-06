@@ -20,4 +20,13 @@ const daily = async (req, res, next) => {
   }
 };
 
-module.exports = { summary, daily };
+const myImpact = async (req, res, next) => {
+  try {
+    const data = await impactService.getUserImpact(req.user.id, req.user.role);
+    sendSuccess(res, data);
+  } catch (err) {
+    next(err);
+  }
+};
+
+module.exports = { summary, daily, myImpact };

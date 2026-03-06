@@ -1,0 +1,32 @@
+{
+  "name": "SurplusSync",
+  "short_name": "SurplusSync",
+  "description": "AI-powered food redistribution platform connecting donors and NGOs to reduce food waste.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#16a34a",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "48x48",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "/logo192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["food", "social", "utilities"],
+  "screenshots": [],
+  "prefer_related_applications": false
+}

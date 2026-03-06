@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Bell, Search, Settings, Leaf, LogOut } from "lucide-react";
+import { Bell, Search, Settings, Leaf, LogOut, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -9,15 +9,32 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/contexts/AuthContext";
+import { useQuery } from "@tanstack/react-query";
+import { matchesApi } from "@/lib/api";
+import { Match } from "@/types/api";
 
 const Navbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
 
+  // Notification count: unactioned matches for RECIPIENT
+  const { data: myMatches = [] } = useQuery<Match[]>({
+    queryKey: ["my-matches"],
+    queryFn: matchesApi.getMyMatches,
+    enabled: user?.role === "RECIPIENT",
+    refetchInterval: 30_000,
+  });
+  const notifCount = user?.role === "RECIPIENT"
+    ? myMatches.filter((m) => m.donation?.status === "MATCHED" && !m.selected).length
+    : 0;
+
   const navItems = [
     { label: "Dashboard", path: user?.role === "ADMIN" ? "/admin" : "/dashboard" },
     { label: "Donations", path: "/donations" },
+    ...(user?.role === "DONOR"
+      ? [{ label: "My Donations", path: "/my-donations" }]
+      : []),
     ...(user?.role !== "DONOR"
       ? [{ label: "Matches", path: user?.role === "RECIPIENT" ? "/my-matches" : "/matches" }]
       : []),
@@ -68,10 +85,28 @@ const Navbar = () => {
               className="bg-transparent text-sm outline-none w-40 text-foreground placeholder:text-muted-foreground"
             />
           </div>
-          <Button variant="ghost" size="icon" className="text-muted-foreground">
+          {/* Notification Bell */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="relative text-muted-foreground"
+            onClick={() => user?.role === "RECIPIENT" ? navigate("/my-matches") : undefined}
+          >
             <Bell className="w-5 h-5" />
+            {notifCount > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full flex items-center justify-center">
+                {notifCount > 9 ? "9+" : notifCount}
+              </span>
+            )}
           </Button>
-          <Button variant="ghost" size="icon" className="text-muted-foreground">
+          {/* Profile link */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-muted-foreground"
+            onClick={() => navigate("/organization")}
+            title="Profile"
+          >
             <Settings className="w-5 h-5" />
           </Button>
 

@@ -3,8 +3,9 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { communityStories } from "@/data/mockData";
 import { impactApi } from "@/lib/api";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Calendar, TrendingUp, Utensils, CloudOff, Recycle } from "lucide-react";
+import { ArrowRight, Calendar, TrendingUp, Utensils, CloudOff, Recycle, User } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import communityVolunteers from "@/assets/community-volunteers.jpg";
 import foodProduce from "@/assets/food-produce.jpg";
@@ -14,9 +15,17 @@ const iconMap: Record<string, React.ElementType> = { Utensils, CloudOff, Recycle
 const storyImages = [communityVolunteers, foodProduce, communityKitchen];
 
 const ImpactAnalytics = () => {
+  const { user } = useAuth();
+
   const { data: impact } = useQuery({
     queryKey: ["impact-summary"],
     queryFn: impactApi.summary,
+  });
+
+  const { data: myImpact } = useQuery({
+    queryKey: ["impact-my"],
+    queryFn: impactApi.myImpact,
+    enabled: user?.role === "DONOR" || user?.role === "RECIPIENT",
   });
 
   const { data: dailyRaw = [] } = useQuery({
@@ -90,6 +99,32 @@ const ImpactAnalytics = () => {
             );
           })}
         </div>
+
+        {/* My Contribution */}
+        {myImpact && (
+          <div className="card-elevated p-6 mb-8 border border-primary/20">
+            <h3 className="font-semibold text-foreground flex items-center gap-2 mb-4">
+              <User className="w-4 h-4 text-primary" />
+              My Contribution
+              <span className="ml-auto text-xs text-muted-foreground font-normal">
+                {user?.role === "DONOR" ? "As a Donor" : "As a Recipient"}
+              </span>
+            </h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {[
+                { label: user?.role === "DONOR" ? "Kg Donated" : "Kg Received", value: `${myImpact.totalKgSaved} kg`, color: "text-primary" },
+                { label: "Meals Enabled", value: myImpact.estimatedMealsSaved.toLocaleString(), color: "text-green-600" },
+                { label: "CO₂ Saved", value: `${myImpact.estimatedCo2Reduced} kg`, color: "text-blue-600" },
+                { label: user?.role === "DONOR" ? "Deliveries" : "Pickups", value: myImpact.totalSuccessfulDeliveries, color: "text-amber-600" },
+              ].map((s) => (
+                <div key={s.label} className="bg-muted/50 rounded-xl p-4 text-center">
+                  <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
+                  <p className="text-xs text-muted-foreground mt-1">{s.label}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Chart */}
         <div className="card-elevated p-6 mb-8">

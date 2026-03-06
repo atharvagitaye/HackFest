@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -8,7 +8,7 @@ import StatusBadge from "@/components/shared/StatusBadge";
 import { donationsApi, matchesApi, deliveriesApi } from "@/lib/api";
 import { Donation, Match, Delivery } from "@/types/api";
 import { Button } from "@/components/ui/button";
-import { Plus, Package, MapPin, X, Check, Truck, ClipboardList } from "lucide-react";
+import { Plus, Package, MapPin, X, Check, Truck, ClipboardList, Search, Star, Clock } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
 import foodBakery from "@/assets/food-bakery.jpg";
@@ -43,11 +43,23 @@ function resolveImage(foodCategory?: string): string {
   return "meals";
 }
 
+function countdownLabel(deadline?: string): string | null {
+  if (!deadline) return null;
+  const ms = new Date(deadline).getTime() - Date.now();
+  if (ms <= 0) return "Overdue";
+  const h = Math.floor(ms / 3600000);
+  const m = Math.floor((ms % 3600000) / 60000);
+  if (h >= 48) return null; // don't show for far-future deadlines
+  return h > 0 ? `${h}h ${m}m left` : `${m}m left`;
+}
+
 const DonationsFeed = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const [activeCategory, setActiveCategory] = useState("All Items");
+  const [searchText, setSearchText] = useState("");
+  const [statusFilter, setStatusFilter] = useState("Open");
 
   const { data: donationsData, isLoading } = useQuery({
     queryKey: ["donations"],
@@ -124,13 +136,27 @@ const DonationsFeed = () => {
 
   const donations: Donation[] = donationsData ?? [];
 
-  const filtered = activeCategory === "All Items"
-    ? donations
-    : activeCategory === "Urgent"
-      ? donations.filter(d => deriveUrgency(d.expiryTime) === "urgent")
-      : donations.filter(d =>
-          (d.foodCategory ?? "").toLowerCase().includes(activeCategory.toLowerCase())
-        );
+  const filtered = useMemo(() => {
+    let result = donations;
+    // Status filter
+    if (statusFilter === "Open") result = result.filter(d => !["DELIVERED", "CANCELLED", "EXPIRED"].includes(d.status));
+    else if (statusFilter === "Delivered") result = result.filter(d => d.status === "DELIVERED");
+    // Category filter
+    if (activeCategory !== "All Items") {
+      if (activeCategory === "Urgent") result = result.filter(d => deriveUrgency(d.expiryTime) === "urgent");
+      else result = result.filter(d => (d.foodCategory ?? "").toLowerCase().includes(activeCategory.toLowerCase()));
+    }
+    // Search
+    if (searchText.trim()) {
+      const q = searchText.toLowerCase();
+      result = result.filter(d =>
+        (d.foodCategory ?? "").toLowerCase().includes(q) ||
+        (d.organization?.name ?? "").toLowerCase().includes(q) ||
+        (d.donor?.name ?? "").toLowerCase().includes(q)
+      );
+    }
+    return result;
+  }, [donations, activeCategory, searchText, statusFilter]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -255,14 +281,45 @@ const DonationsFeed = () => {
           </div>
         )}
 
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">Surplus Donations Feed</h1>
-            <p className="text-muted-foreground text-sm mt-1">AI-powered food redistribution opportunities in your area</p>
+        <div className="flex flex-col gap-4 mb-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-foreground">Surplus Donations Feed</h1>
+              <p className="text-muted-foreground text-sm mt-1">AI-powered food redistribution opportunities in your area</p>
+            </div>
+            {user?.role === "DONOR" && (
+              <Button onClick={() => navigate("/donate")}><Plus className="w-4 h-4 mr-2" />Post Donation</Button>
+            )}
           </div>
-          {user?.role === "DONOR" && (
-            <Button onClick={() => navigate("/donate")}><Plus className="w-4 h-4 mr-2" />Post Donation</Button>
-          )}
+
+          {/* Search + status filter row */}
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center bg-muted rounded-lg px-3 py-2 flex-1 min-w-[200px] max-w-xs">
+              <Search className="w-4 h-4 text-muted-foreground mr-2 shrink-0" />
+              <input
+                value={searchText}
+                onChange={(e) => setSearchText(e.target.value)}
+                placeholder="Search food, org..."
+                className="bg-transparent text-sm outline-none flex-1 text-foreground placeholder:text-muted-foreground"
+              />
+              {searchText && (
+                <button onClick={() => setSearchText("")} className="ml-1 text-muted-foreground hover:text-foreground">
+                  <X className="w-3 h-3" />
+                </button>
+              )}
+            </div>
+            {["Open", "Delivered", "All"].map((s) => (
+              <button
+                key={s}
+                onClick={() => setStatusFilter(s)}
+                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors border ${
+                  statusFilter === s ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:bg-muted"
+                }`}
+              >
+                {s}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Filters */}
@@ -304,6 +361,9 @@ const DonationsFeed = () => {
               const urgency = deriveUrgency(donation.expiryTime);
               const uploadedImage = donation.images?.[0]?.imageUrl;
               const imgUrl = uploadedImage ?? imageMap[resolveImage(donation.foodCategory)];
+              const trustScore = donation.donor?.trustScore;
+              const cdLabel = countdownLabel(donation.pickupDeadline ?? donation.expiryTime);
+              const isOverdue = cdLabel === "Overdue";
               return (
                 <div key={donation.id} className="card-elevated-hover overflow-hidden animate-fade-in">
                   <div className="relative h-44 overflow-hidden">
@@ -311,6 +371,13 @@ const DonationsFeed = () => {
                     <div className="absolute top-3 left-3">
                       <StatusBadge urgency={urgency} />
                     </div>
+                    {cdLabel && (
+                      <div className={`absolute top-3 right-3 flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                        isOverdue ? "bg-destructive text-destructive-foreground" : "bg-amber-500 text-white"
+                      }`}>
+                        <Clock className="w-2.5 h-2.5" /> {cdLabel}
+                      </div>
+                    )}
                   </div>
                   <div className="p-4">
                     <h3 className="font-semibold text-foreground mb-2 capitalize">{donation.foodCategory ?? "Food Item"}</h3>
@@ -318,9 +385,17 @@ const DonationsFeed = () => {
                       <Package className="w-3 h-3" />
                       Qty: {donation.quantityKg != null ? `${donation.quantityKg} kg` : "—"}
                     </div>
-                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                      <MapPin className="w-3 h-3" />
-                      {donation.donor?.name ?? donation.organization?.name ?? "Unknown"}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <MapPin className="w-3 h-3" />
+                        {donation.donor?.name ?? donation.organization?.name ?? "Unknown"}
+                      </div>
+                      {trustScore != null && (
+                        <div className="flex items-center gap-0.5 text-[10px] text-warning">
+                          <Star className="w-3 h-3 fill-warning" />
+                          <span className="font-semibold text-foreground">{trustScore.toFixed(1)}</span>
+                        </div>
+                      )}
                     </div>
                     {user?.role === "DONOR" &&
                       donation.status !== "DELIVERED" &&

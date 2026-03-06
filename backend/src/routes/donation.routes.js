@@ -170,4 +170,7 @@ router.get('/:id/nearby-recipients', requireAuth, donationController.nearbyRecip
 // Accepts multipart/form-data with field "image", or JSON { imageUrl }
 router.post('/:id/images', requireAuth, upload.single('image'), donationController.addImage);
 
+// Status history for a donation
+router.get('/:id/status-logs', requireAuth, donationController.getStatusLogs);
+
 module.exports = router;

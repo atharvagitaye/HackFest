@@ -52,7 +52,19 @@ const listDonations = async (query) => {
   const filters = {};
   if (query.status) filters.status = query.status;
   if (query.donorId) filters.donorId = query.donorId;
+  if (query.search) {
+    filters.OR = [
+      { foodCategory: { contains: query.search, mode: 'insensitive' } },
+      { organization: { name: { contains: query.search, mode: 'insensitive' } } },
+    ];
+  }
   return donationRepo.findAll(filters);
+};
+
+const getStatusLogs = async (donationId) => {
+  const donation = await donationRepo.findById(donationId);
+  if (!donation) throw AppError.notFound('Donation not found');
+  return donationRepo.findStatusLogs(donationId);
 };
 
 const getDonation = async (id) => {
@@ -104,4 +116,4 @@ const addImage = async (donationId, imageUrl) => {
   return donationRepo.addImage(donationId, imageUrl);
 };
 
-module.exports = { createDonation, listDonations, getDonation, updateDonationStatus, getNearbyRecipients, addImage };
+module.exports = { createDonation, listDonations, getDonation, updateDonationStatus, getNearbyRecipients, addImage, getStatusLogs };

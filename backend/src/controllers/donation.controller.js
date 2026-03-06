@@ -71,4 +71,13 @@ const addImage = async (req, res, next) => {
   }
 };
 
-module.exports = { create, list, getById, updateStatus, nearbyRecipients, addImage };
+const getStatusLogs = async (req, res, next) => {
+  try {
+    const logs = await donationService.getStatusLogs(req.params.id);
+    sendSuccess(res, logs);
+  } catch (err) {
+    next(err);
+  }
+};
+
+module.exports = { create, list, getById, updateStatus, nearbyRecipients, addImage, getStatusLogs };

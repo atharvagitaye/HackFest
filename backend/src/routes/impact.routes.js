@@ -4,6 +4,12 @@ const { requireAuth } = require('../middlewares/auth');
 
 const router = Router();
 
+router.get('/summary', requireAuth, impactController.summary);
+router.get('/daily', requireAuth, impactController.daily);
+router.get('/my', requireAuth, impactController.myImpact);
+
+module.exports = router;
+
 /**
  * @swagger
  * tags:

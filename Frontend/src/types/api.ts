@@ -193,3 +193,14 @@ export interface AdminStats {
   totalOrganizations: number;
   pendingVerification: number;
 }
+
+// ─── Status Logs ──────────────────────────────────────────────
+export interface StatusLog {
+  id: string;
+  donationId: string;
+  oldStatus: string;
+  newStatus: string;
+  changedBy: string;
+  changedAt: string;
+  changer?: { id: string; name: string; role: string };
+}

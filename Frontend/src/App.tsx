@@ -18,6 +18,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import AdminDashboard from "./pages/AdminDashboard";
 import RecipientMatches from "./pages/RecipientMatches";
+import MyDonations from "./pages/MyDonations";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -62,6 +63,7 @@ const App = () => (
           <Route path="/organization" element={<ProtectedRoute><OrganizationProfile /></ProtectedRoute>} />
           <Route path="/donate" element={<ProtectedRoute><DonationWizard /></ProtectedRoute>} />
           <Route path="/review" element={<ProtectedRoute><DonationReview /></ProtectedRoute>} />
+          <Route path="/my-donations" element={<ProtectedRoute><MyDonations /></ProtectedRoute>} />
 
           <Route path="*" element={<NotFound />} />
         </Routes>

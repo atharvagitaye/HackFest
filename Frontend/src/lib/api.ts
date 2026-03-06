@@ -60,7 +60,7 @@ export const authApi = {
 
 // ─── Donations ────────────────────────────────────────────────────────────────
 export const donationsApi = {
-  list: (params?: { status?: string; donorId?: string }) => {
+  list: (params?: { status?: string; donorId?: string; search?: string }) => {
     const qs = params
       ? '?' + new URLSearchParams(Object.entries(params).filter(([, v]) => v) as [string, string][]).toString()
       : '';
@@ -77,6 +77,9 @@ export const donationsApi = {
 
   nearbyRecipients: (id: string) =>
     req<NearbyRecipient[]>('GET', `/donations/${id}/nearby-recipients`),
+
+  statusLogs: (id: string) =>
+    req<StatusLog[]>('GET', `/donations/${id}/status-logs`),
 
   addImage: (id: string, file: File) => {
     const form = new FormData();
@@ -157,5 +160,4 @@ export const adminApi = {
 export const impactApi = {
   summary: () => req<ImpactSummary>('GET', '/impact/summary'),
   daily: (days?: number) =>
-    req<DailyImpactPoint[]>('GET', `/impact/daily${days ? `?days=${days}` : ''}`),
-};
+    req<DailyImpactPoint[]>('GET', `/impact/daily${days ? `?days=${days}` : ''}`),  myImpact: () => req<ImpactSummary>('GET', '/impact/my'),};

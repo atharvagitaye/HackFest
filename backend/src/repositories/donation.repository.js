@@ -79,4 +79,20 @@ const findNearbyRecipients = async (donation, radiusKm) => {
 const addImage = (donationId, imageUrl) =>
   prisma.donationImage.create({ data: { donationId, imageUrl } });
 
-module.exports = { create, findAll, findById, updateStatus, createStatusLog, findNearbyRecipients, addImage };
+const findStatusLogs = (donationId) =>
+  prisma.statusLog.findMany({
+    where: { donationId },
+    orderBy: { changedAt: 'asc' },
+    include: { changer: { select: { id: true, name: true, role: true } } },
+  });
+
+const expireStale = () =>
+  prisma.donation.updateMany({
+    where: {
+      status: { in: ['REPORTED', 'MATCHED'] },
+      expiryTime: { lt: new Date() },
+    },
+    data: { status: 'EXPIRED' },
+  });
+
+module.exports = { create, findAll, findById, updateStatus, createStatusLog, findNearbyRecipients, addImage, findStatusLogs, expireStale };

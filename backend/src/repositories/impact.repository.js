@@ -73,4 +73,33 @@ const getDailyImpact = async (days = 30) => {
     }));
 };
 
-module.exports = { computeSummary, getDailyImpact };
+const computeUserImpact = async (userId, role) => {
+  if (role === 'DONOR') {
+    const donations = await prisma.donation.findMany({
+      where: { donorId: userId, status: 'DELIVERED' },
+      select: { quantityKg: true, estimatedMeals: true },
+    });
+    const kgSaved = donations.reduce((s, d) => s + (d.quantityKg ?? 0), 0);
+    const mealsEnabled = donations.reduce((s, d) => s + (d.estimatedMeals ?? Math.round((d.quantityKg ?? 0) / 0.5)), 0);
+    return {
+      totalKgSaved: parseFloat(kgSaved.toFixed(2)),
+      estimatedMealsSaved: mealsEnabled,
+      estimatedCo2Reduced: parseFloat((kgSaved * 2.5).toFixed(2)),
+      totalSuccessfulDeliveries: donations.length,
+    };
+  }
+  // RECIPIENT
+  const deliveries = await prisma.delivery.findMany({
+    where: { recipientId: userId, completed: true },
+    include: { donation: { select: { quantityKg: true } } },
+  });
+  const kgReceived = deliveries.reduce((s, d) => s + (d.donation?.quantityKg ?? 0), 0);
+  return {
+    totalKgSaved: parseFloat(kgReceived.toFixed(2)),
+    estimatedMealsSaved: Math.round(kgReceived / 0.5),
+    estimatedCo2Reduced: parseFloat((kgReceived * 2.5).toFixed(2)),
+    totalSuccessfulDeliveries: deliveries.length,
+  };
+};
+
+module.exports = { computeSummary, getDailyImpact, computeUserImpact };
