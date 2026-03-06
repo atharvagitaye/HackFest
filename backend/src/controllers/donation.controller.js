@@ -80,4 +80,50 @@ const getStatusLogs = async (req, res, next) => {
   }
 };
 
-module.exports = { create, list, getById, updateStatus, nearbyRecipients, addImage, getStatusLogs };
+const exportCSV = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    const role = req.user.role;
+    
+    // Get donations based on role
+    const donations = role === 'DONOR'
+      ? await donationService.listDonations({ donorId: userId })
+      : await donationService.listDonations({ recipientId: userId });
+
+    // Create CSV header
+    const headers = [
+      'Date',
+      'Food Category',
+      'Quantity (kg)',
+      'Estimated Meals',
+      'Status',
+      'Organization',
+      'Pickup Location',
+      'Expiry Time',
+    ];
+
+    // Create CSV rows
+    const rows = donations.map((d) => [
+      new Date(d.createdAt).toLocaleDateString('en-IN'),
+      d.foodCategory || 'N/A',
+      d.quantityKg || '0',
+      d.estimatedMeals || '0',
+      d.status,
+      d.organization?.name || 'N/A',
+      d.organization?.address || 'N/A',
+      d.expiryTime ? new Date(d.expiryTime).toLocaleString('en-IN') : 'N/A',
+    ]);
+
+    // Combine headers and rows
+    const csv = [headers.join(','), ...rows.map((row) => row.join(','))].join('\n');
+
+    // Set response headers for CSV download
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename="donations_${Date.now()}.csv"`);
+    res.send(csv);
+  } catch (err) {
+    next(err);
+  }
+};
+
+module.exports = { create, list, getById, updateStatus, nearbyRecipients, addImage, getStatusLogs, exportCSV };

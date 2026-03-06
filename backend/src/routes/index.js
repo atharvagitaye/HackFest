@@ -6,6 +6,7 @@ const deliveryRoutes = require('./delivery.routes');
 const impactRoutes = require('./impact.routes');
 const ratingRoutes = require('./rating.routes');
 const adminRoutes = require('./admin.routes');
+const disputeRoutes = require('./dispute.routes');
 
 const router = Router();
 
@@ -16,5 +17,6 @@ router.use('/deliveries', deliveryRoutes);
 router.use('/impact', impactRoutes);
 router.use('/ratings', ratingRoutes);
 router.use('/admin', adminRoutes);
+router.use('/disputes', disputeRoutes);
 
 module.exports = router;

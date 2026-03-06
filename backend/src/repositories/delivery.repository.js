@@ -19,9 +19,18 @@ const findById = (id) =>
     where: { id },
     include: {
       donation: {
-        include: {
+        select: {
+          id: true,
+          donorId: true,
+          organizationId: true,
+          foodCategory: true,
+          quantityKg: true,
+          estimatedMeals: true,
+          status: true,
+          latitude: true,
+          longitude: true,
           donor: { select: { id: true, name: true } },
-          organization: { select: { id: true, name: true } },
+          organization: { select: { id: true, name: true, type: true, address: true, latitude: true, longitude: true } },
         },
       },
       recipient: { select: { id: true, name: true } },

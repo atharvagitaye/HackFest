@@ -161,4 +161,93 @@ const updateKYCStatus = async (req, res, next) => {
   }
 };
 
-module.exports = { listUsers, verifyUser, deleteUser, listAllDonations, getStats, getPendingKYC, updateKYCStatus };
+// ── Geo Heatmap Data ───────────────────────────────────────────────────────────
+
+const getGeoHeatmap = async (req, res, next) => {
+  try {
+    const donations = await prisma.donation.findMany({
+      where: {
+        latitude: { not: null },
+        longitude: { not: null },
+      },
+      select: {
+        id: true,
+        latitude: true,
+        longitude: true,
+        status: true,
+        quantityKg: true,
+        createdAt: true,
+        organization: {
+          select: { name: true, type: true },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 500, // Limit for performance
+    });
+    sendSuccess(res, donations);
+  } catch (err) {
+    next(err);
+  }
+};
+
+// ── Expiry / Waste Report ──────────────────────────────────────────────────────
+
+const getWasteReport = async (req, res, next) => {
+  try {
+    const now = new Date();
+    
+    // Get expired donations
+    const expired = await prisma.donation.findMany({
+      where: {
+        expiryTime: { lt: now },
+        status: { in: ['REPORTED', 'MATCHED', 'ACCEPTED'] }, // Not picked up/completed
+      },
+      include: {
+        organization: { select: { name: true, type: true } },
+        donor: { select: { name: true, email: true } },
+      },
+      orderBy: { expiryTime: 'desc' },
+    });
+
+    // Calculate waste stats
+    const totalExpired = expired.length;
+    const totalKgWasted = expired.reduce((sum, d) => sum + (d.quantityKg || 0), 0);
+    const totalMealsWasted = expired.reduce((sum, d) => sum + (d.estimatedMeals || 0), 0);
+
+    // Group by organization type
+    const wasteByType = expired.reduce((acc, d) => {
+      const type = d.organization?.type || 'UNKNOWN';
+      if (!acc[type]) {
+        acc[type] = { count: 0, kgWasted: 0, mealsWasted: 0 };
+      }
+      acc[type].count++;
+      acc[type].kgWasted += d.quantityKg || 0;
+      acc[type].mealsWasted += d.estimatedMeals || 0;
+      return acc;
+    }, {});
+
+    sendSuccess(res, {
+      summary: {
+        totalExpired,
+        totalKgWasted,
+        totalMealsWasted,
+      },
+      byType: wasteByType,
+      recentExpired: expired.slice(0, 20), // Last 20 expired
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+module.exports = { 
+  listUsers, 
+  verifyUser, 
+  deleteUser, 
+  listAllDonations, 
+  getStats, 
+  getPendingKYC, 
+  updateKYCStatus,
+  getGeoHeatmap,
+  getWasteReport,
+};

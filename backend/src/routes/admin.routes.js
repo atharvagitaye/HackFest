@@ -29,5 +29,7 @@ router.delete('/users/:id', adminController.deleteUser);
 router.get('/donations', adminController.listAllDonations);
 router.get('/kyc/pending', adminController.getPendingKYC);
 router.patch('/kyc/:id', validate(kycSchema), adminController.updateKYCStatus);
+router.get('/geo-heatmap', adminController.getGeoHeatmap);
+router.get('/waste-report', adminController.getWasteReport);
 
 module.exports = router;

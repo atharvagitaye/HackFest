@@ -137,6 +137,7 @@ model Delivery {
 
   donation  Donation @relation(fields: [donationId], references: [id], onDelete: Cascade)
   recipient User     @relation("RecipientDeliveries", fields: [recipientId], references: [id])
+  disputes  Dispute[]
 
   @@index([donationId])
   @@index([recipientId])
@@ -209,4 +210,24 @@ model DailyImpact {
   co2Reduced  Float?   @map("co2_reduced")
 
   @@map("daily_impact")
+}
+
+model Dispute {
+  id          String   @id @default(uuid())
+  deliveryId  String   @map("delivery_id")
+  reportedBy  String   @map("reported_by")
+  category    String   @db.VarChar(50) // QUALITY_ISSUE | NO_SHOW | LATE_PICKUP | OTHER
+  description String
+  status      String   @default("PENDING") @db.VarChar(20) // PENDING | INVESTIGATING | RESOLVED | DISMISSED
+  resolution  String?
+  resolvedBy  String?  @map("resolved_by")
+  resolvedAt  DateTime? @map("resolved_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  delivery Delivery @relation(fields: [deliveryId], references: [id], onDelete: Cascade)
+
+  @@index([deliveryId])
+  @@index([reportedBy])
+  @@index([status])
+  @@map("disputes")
 }

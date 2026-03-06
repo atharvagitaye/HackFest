@@ -173,4 +173,7 @@ router.post('/:id/images', requireAuth, upload.single('image'), donationControll
 // Status history for a donation
 router.get('/:id/status-logs', requireAuth, donationController.getStatusLogs);
 
+// Export donation history as CSV
+router.get('/export/csv', requireAuth, donationController.exportCSV);
+
 module.exports = router;
