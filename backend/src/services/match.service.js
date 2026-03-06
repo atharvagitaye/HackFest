@@ -4,16 +4,67 @@ const deliveryRepo = require('../repositories/delivery.repository');
 const mlClient = require('../ml/mlClient');
 const AppError = require('../utils/AppError');
 const config = require('../config/env');
+const prisma = require('../config/prisma');
+
+/**
+ * Calculate historical success rate for a recipient.
+ * Success = delivery completed without major delays or issues.
+ * @param {string} recipientId 
+ * @returns {Promise<{successRate: number, totalDeliveries: number}>}
+ */
+const calculateHistoricalSuccess = async (recipientId) => {
+  // Get all completed deliveries for this recipient
+  const deliveries = await prisma.delivery.findMany({
+    where: { 
+      recipientId,
+      completed: true,
+    },
+    select: {
+      id: true,
+      delayMinutes: true,
+      completed: true,
+      deliveryTime: true,
+      pickupTime: true,
+    },
+  });
+
+  const totalDeliveries = deliveries.length;
+  
+  if (totalDeliveries === 0) {
+    return { successRate: 0.5, totalDeliveries: 0 }; // Neutral for new users
+  }
+
+  // Define success criteria:
+  // - Delivery completed
+  // - Delay less than 60 minutes (generous threshold)
+  const successfulDeliveries = deliveries.filter(d => {
+    const delay = d.delayMinutes || 0;
+    return d.completed && delay < 60;
+  }).length;
+
+  const successRate = successfulDeliveries / totalDeliveries;
+  
+  return { 
+    successRate: parseFloat(successRate.toFixed(4)), 
+    totalDeliveries 
+  };
+};
 
 /**
  * Extract feature vectors from candidates relative to a donation.
+ * Enhanced with historical performance data.
  */
-const extractFeatures = (donation, candidates) => {
+const extractFeatures = async (donation, candidates) => {
   const now = new Date();
   const expiryMs = donation.expiryTime ? new Date(donation.expiryTime) - now : null;
   const maxMs = 24 * 60 * 60 * 1000; // 24 hours as baseline
 
-  return candidates.map((c) => {
+  // Calculate historical success rates for all candidates in parallel
+  const historicalData = await Promise.all(
+    candidates.map(c => calculateHistoricalSuccess(c.recipientId))
+  );
+
+  return candidates.map((c, index) => {
     // Urgency: closer to expiry = higher score (clamped 0–1)
     const urgencyScore = expiryMs !== null
       ? parseFloat(Math.max(0, 1 - expiryMs / maxMs).toFixed(4))
@@ -24,6 +75,8 @@ const extractFeatures = (donation, candidates) => {
       ? parseFloat(Math.min(1, donation.quantityKg / c.maxCapacityKg).toFixed(4))
       : 0.5;
 
+    const historical = historicalData[index];
+
     return {
       recipientId: c.recipientId,
       distanceKm: c.distance_km,
@@ -31,6 +84,9 @@ const extractFeatures = (donation, candidates) => {
       capacityFitScore,
       trustScore: c.trustScore ?? 0.5,
       maxCapacityKg: c.maxCapacityKg,
+      donationKg: donation.quantityKg,
+      historicalSuccessRate: historical.successRate,
+      totalDeliveries: historical.totalDeliveries,
     };
   });
 };
@@ -73,7 +129,7 @@ const generateMatches = async (donationId) => {
     return { matched: 0, message: 'No nearby recipients found' };
   }
 
-  const features = extractFeatures(donation, candidates);
+  const features = await extractFeatures(donation, candidates);
   const predictions = await scoreCandidates(features);
 
   await saveMatches(donationId, predictions);
