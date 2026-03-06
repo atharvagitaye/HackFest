@@ -37,7 +37,7 @@ export default function QRScanner({ onScanSuccess, onClose, isScanning = false }
     try {
       setError("");
       setPermissionDenied(false);
-      
+
       // Check if we're in a secure context (required for camera on mobile)
       if (!window.isSecureContext && window.location.hostname !== 'localhost') {
         setError("Camera access requires HTTPS or localhost. Mobile Chrome will not show a permission prompt on HTTP. Please access the site via https:// or use localhost instead of an IP address.");
@@ -54,26 +54,16 @@ export default function QRScanner({ onScanSuccess, onClose, isScanning = false }
 
       setScanning(true);
 
-      // Request camera permission explicitly
+      // getCameras() triggers the permission prompt and returns available cameras
+      // in a single call — avoids the acquire/release/re-acquire race condition
+      let devices: Array<{ id: string; label: string }>;
       try {
-        const constraints = {
-          video: { 
-            facingMode: isMobile ? { ideal: "environment" } : "environment",
-            width: { ideal: 1280 },
-            height: { ideal: 720 }
-          } 
-        };
-        
-        const stream = await navigator.mediaDevices.getUserMedia(constraints);
-        // Stop the test stream - Html5Qrcode will create its own
-        stream.getTracks().forEach(track => track.stop());
-        // Wait for the camera hardware to fully release before re-acquiring
-        await new Promise<void>(resolve => setTimeout(resolve, 600));
+        devices = await Html5Qrcode.getCameras();
       } catch (permErr: any) {
         console.error("Permission error:", permErr);
         setScanning(false);
         setPermissionDenied(true);
-        
+
         if (permErr.name === 'NotAllowedError' || permErr.name === 'PermissionDeniedError') {
           if (isMobile) {
             setError("Camera permission denied. Please allow camera access:\n\n1. Tap the lock icon (🔒) or info icon (ⓘ) in the address bar\n2. Tap 'Permissions' or 'Site settings'\n3. Enable 'Camera'\n4. Refresh the page and try again");
@@ -90,22 +80,36 @@ export default function QRScanner({ onScanSuccess, onClose, isScanning = false }
         return;
       }
 
+      if (!devices || devices.length === 0) {
+        setError("No camera found on this device.");
+        setScanning(false);
+        return;
+      }
+
+      // Prefer back/rear camera; fall back to last device (usually back on mobile)
+      const backCamera =
+        devices.find(d => /back|rear|environment/i.test(d.label)) ||
+        devices[devices.length - 1];
+
       const html5QrCode = new Html5Qrcode(readerIdRef.current);
       scannerRef.current = html5QrCode;
 
       await html5QrCode.start(
-        { facingMode: isMobile ? { ideal: "environment" } : "environment" }, // Use back camera on mobile
+        backCamera.id,
         {
           fps: 10,
           qrbox: { width: 250, height: 250 },
         },
         (decodedText) => {
-          // Success callback
           onScanSuccess(decodedText);
-          stopScanning();
+          // Inline stop to avoid stale-closure issues with stopScanning
+          if (scannerRef.current?.isScanning) {
+            scannerRef.current.stop().catch(console.error);
+            scannerRef.current = null;
+          }
+          setScanning(false);
         },
         (errorMessage) => {
-          // Error callback - can be ignored as it fires frequently during scanning
           console.debug("QR scan error:", errorMessage);
         }
       );
