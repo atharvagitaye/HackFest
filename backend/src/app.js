@@ -10,6 +10,7 @@ const routes = require('./routes');
 const errorHandler = require('./middlewares/errorHandler');
 const swaggerSpec = require('./config/swagger');
 const config = require('./config/env');
+const { apiLimiter } = require('./middlewares/rateLimiter');
 
 const path = require('path');
 const app = express();
@@ -19,6 +20,9 @@ app.use(helmet({ crossOriginResourcePolicy: false }));
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true }));
+
+// ── Rate Limiting ─────────────────────────────────────────────────────────────
+app.use('/api/', apiLimiter);
 
 // ── Static files (uploaded images) ───────────────────────────────────────────
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));

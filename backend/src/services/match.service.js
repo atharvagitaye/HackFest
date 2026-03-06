@@ -118,7 +118,7 @@ const saveMatches = async (donationId, predictions) => {
 };
 
 /**
- * Main orchestrator — AI-ready modular design.
+ * Main orchestrator — AI-ready modular design with enhanced algorithmic matching.
  */
 const generateMatches = async (donationId) => {
   const donation = await donationRepo.findById(donationId);
@@ -132,6 +132,7 @@ const generateMatches = async (donationId) => {
     return { matched: 0, message: 'No nearby recipients found' };
   }
 
+  // Extract features with historical data (now async)
   const features = await extractFeatures(donation, candidates);
   const predictions = await scoreCandidates(features);
 

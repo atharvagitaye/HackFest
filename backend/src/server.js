@@ -10,7 +10,7 @@ const start = async () => {
     await prisma.$connect();
     console.log('✅ Database connected');
     
-    // Initialize background jobs (node-cron)
+    // Initialize background jobs (includes expiry cron + trust score updates)
     initializeJobs();
 
     app.listen(PORT, () => {
@@ -26,8 +26,9 @@ const start = async () => {
 // Graceful shutdown
 const shutdown = async (signal) => {
   console.log(`\n${signal} received — shutting down gracefully`);
-  stopJobs(); // Stop all background jobs
+  stopJobs();
   await prisma.$disconnect();
+  console.log('✅ Cleanup complete');
   process.exit(0);
 };
 
@@ -35,3 +36,4 @@ process.on('SIGTERM', () => shutdown('SIGTERM'));
 process.on('SIGINT', () => shutdown('SIGINT'));
 
 start();
+

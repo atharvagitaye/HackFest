@@ -1,6 +1,7 @@
 const { Router } = require('express');
 const matchController = require('../controllers/match.controller');
 const { requireAuth, requireRole } = require('../middlewares/auth');
+const { matchLimiter } = require('../middlewares/rateLimiter');
 
 
 const router = Router();
@@ -30,7 +31,7 @@ const router = Router();
  *       201:
  *         description: Matches generated successfully
  */
-router.post('/generate/:donationId', requireAuth, requireRole(['DONOR', 'ADMIN']), matchController.generate);
+router.post('/generate/:donationId', requireAuth, requireRole(['DONOR', 'ADMIN']), matchLimiter, matchController.generate);
 
 // Must be before /:id routes to avoid conflict
 router.get('/my', requireAuth, requireRole('RECIPIENT'), matchController.getMyMatches);
