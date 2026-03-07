@@ -77,19 +77,19 @@ const Landing = () => {
       {/* Hero */}
       <section className="relative overflow-hidden">
         <div className="container grid lg:grid-cols-2 gap-0 items-stretch min-h-[520px]">
-          <div className="flex flex-col justify-center py-16 lg:py-20 pr-8">
+          <div className="flex flex-col justify-center py-12 lg:py-20 lg:pr-8">
             <span className="badge-info mb-4 w-fit">FIGHTING GLOBAL HUNGER</span>
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold leading-tight mb-6 text-foreground">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold leading-tight mb-6 text-foreground">
               Turn Surplus Food<br />Into <span className="text-gradient">Shared Hope</span>
             </h1>
-            <p className="text-lg text-muted-foreground mb-8 max-w-lg leading-relaxed">
+            <p className="text-base sm:text-lg text-muted-foreground mb-8 max-w-lg leading-relaxed">
               Our AI-powered platform connects surplus food from businesses to those who need it most, reducing waste and fighting hunger in real-time.
             </p>
-            <div className="flex items-center gap-4 mb-8">
-              <Button size="lg" asChild>
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-8">
+              <Button size="lg" asChild className="w-full sm:w-auto">
                 <Link to="/dashboard">Become a Donor</Link>
               </Button>
-              <Button variant="outline" size="lg" asChild>
+              <Button variant="outline" size="lg" asChild className="w-full sm:w-auto">
                 <Link to="/donations">Find Food Near You</Link>
               </Button>
             </div>
@@ -117,7 +117,7 @@ const Landing = () => {
           <p className="text-center text-muted-foreground mb-12 max-w-xl mx-auto">
             Our intelligent matching system ensures food reaches its destination quickly and safely through a coordinated network of partners.
           </p>
-          <div className="grid md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             {[
               { icon: Package, title: "Donor Upload", desc: "Restaurants and grocers list surplus food in seconds via our mobile app or web dashboard." },
               { icon: Utensils, title: "AI Matching", desc: "Our algorithm identifies the best local charities based on proximity, food type, and current need." },
@@ -200,16 +200,16 @@ const Landing = () => {
       {/* CTA */}
       <section className="py-20">
         <div className="container">
-          <div className="bg-foreground rounded-3xl p-12 text-center">
-            <h2 className="text-3xl font-bold text-background mb-4">Ready to feed your community?</h2>
+          <div className="bg-foreground rounded-3xl p-6 sm:p-12 text-center">
+            <h2 className="text-2xl sm:text-3xl font-bold text-background mb-4">Ready to feed your community?</h2>
             <p className="text-background/70 mb-8 max-w-md mx-auto">
               Join our network of sustainable businesses and community organizations today.
             </p>
-            <div className="flex items-center justify-center gap-4">
-              <Button size="lg" asChild>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+              <Button size="lg" asChild className="w-full sm:w-auto">
                 <Link to="/dashboard">Get Started for Free</Link>
               </Button>
-              <Button variant="outline" size="lg" className="border-background/20 text-background hover:bg-background/10" asChild>
+              <Button variant="outline" size="lg" className="border-background/20 text-background hover:bg-background/10 w-full sm:w-auto" asChild>
                 <Link to="/impact">Talk to an Expert</Link>
               </Button>
             </div>

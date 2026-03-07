@@ -169,14 +169,14 @@ const AdminDashboard = () => {
       <Navbar />
       <main className="container py-8">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Admin Dashboard</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Admin Dashboard</h1>
             <p className="text-muted-foreground text-sm mt-1">
               Manage platform operations, verify organizations, and monitor activity.
             </p>
           </div>
-          <Button><BarChart3 className="w-4 h-4 mr-2" />Generate Report</Button>
+          <Button className="self-start sm:self-auto"><BarChart3 className="w-4 h-4 mr-2" />Generate Report</Button>
         </div>
 
         {/* Stats Cards */}

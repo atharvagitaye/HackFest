@@ -305,12 +305,12 @@ const DonationsFeed = () => {
         )}
 
         <div className="flex flex-col gap-4 mb-6">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-foreground">Surplus Donations Feed</h1>
+              <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Surplus Donations Feed</h1>
               <p className="text-muted-foreground text-sm mt-1">AI-powered food redistribution opportunities in your area</p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               {user?.role === "RECIPIENT" && (
                 <Button variant="outline" onClick={() => setShowQRScanner(true)}>
                   <Scan className="w-4 h-4 mr-2" />Scan QR Code

@@ -72,8 +72,8 @@ const DeliveryTracking = () => {
       <div className="min-h-screen bg-background">
         <Navbar />
         <main className="container py-8">
-          <div className="flex items-center justify-between mb-6">
-            <h1 className="text-3xl font-bold text-foreground">My Deliveries</h1>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground">My Deliveries</h1>
             {user?.role === 'RECIPIENT' && deliveries.filter(d => d.status === 'PENDING_PICKUP' || d.status === 'ACCEPTED').length > 0 && (
               <Button 
                 variant="outline" 
@@ -202,21 +202,22 @@ const DeliveryTracking = () => {
           <span className="text-primary">Delivery Tracking</span>
         </div>
 
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Delivery Tracking</h1>
-            <div className="flex items-center gap-3 mt-2">
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Delivery Tracking</h1>
+            <div className="flex flex-wrap items-center gap-2 mt-2">
               <span className={`badge-info ${delivery.completed ? "bg-primary/10 text-primary" : ""}`}>
                 {delivery.completed ? "COMPLETED" : "ACTIVE"}
               </span>
               <span className="text-sm text-muted-foreground">ID: #{id?.slice(0, 8)} · Surplus Redistribution</span>
             </div>
           </div>
-          <div className="flex gap-3">
-            <Button variant="outline"><Headphones className="w-4 h-4 mr-2" />Support</Button>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" size="sm"><Headphones className="w-4 h-4 mr-2" />Support</Button>
             <ReportDisputeButton deliveryId={delivery.id} />
             {canComplete && (
               <Button
+                size="sm"
                 onClick={() => completeMutation.mutate()}
                 disabled={completeMutation.isPending}
               >
@@ -225,7 +226,7 @@ const DeliveryTracking = () => {
               </Button>
             )}
             {delivery.completed && !showRating && (
-              <Button variant="outline" onClick={() => setShowRating(true)}>
+              <Button variant="outline" size="sm" onClick={() => setShowRating(true)}>
                 <Star className="w-4 h-4 mr-2" />Rate Donation
               </Button>
             )}
@@ -234,7 +235,8 @@ const DeliveryTracking = () => {
 
         {/* Timeline */}
         <div className="card-elevated p-6 mb-8">
-          <div className="flex items-center justify-between">
+          <div className="overflow-x-auto -mx-2 px-2">
+          <div className="flex items-center justify-between min-w-[420px]">
             {timeline.map((step, i) => {
               const Icon = step.icon;
               return (
@@ -260,6 +262,7 @@ const DeliveryTracking = () => {
                 </div>
               );
             })}
+          </div>
           </div>
         </div>
 

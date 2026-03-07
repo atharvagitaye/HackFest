@@ -71,12 +71,12 @@ const ImpactAnalytics = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
       <main className="container py-8">
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Impact & Sustainability Analytics</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Impact & Sustainability Analytics</h1>
             <p className="text-muted-foreground text-sm mt-1">Real-time data on how SurplusSync is feeding communities and reducing global food waste.</p>
           </div>
-          <Button variant="outline"><Calendar className="w-4 h-4 mr-2" />Last 12 Months</Button>
+          <Button variant="outline" className="self-start"><Calendar className="w-4 h-4 mr-2" />Last 12 Months</Button>
         </div>
 
         {/* Stats */}

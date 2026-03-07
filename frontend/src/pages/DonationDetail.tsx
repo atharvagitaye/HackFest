@@ -88,17 +88,17 @@ export default function DonationDetail() {
         </div>
 
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between mb-6">
           <div>
-            <h1 className="text-3xl font-bold text-foreground mb-2">{donation.foodCategory || 'Food Donation'}</h1>
-            <div className="flex items-center gap-3">
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">{donation.foodCategory || 'Food Donation'}</h1>
+            <div className="flex flex-wrap items-center gap-2">
               <span className={`text-xs font-semibold px-3 py-1 rounded-full ${STATUS_COLORS[donation.status] || 'bg-gray-100 text-gray-700'}`}>
                 {donation.status}
               </span>
               <span className="text-sm text-muted-foreground">ID: #{donation.id.slice(0, 8)}</span>
             </div>
           </div>
-          <Button variant="outline" onClick={() => navigate(-1)}>
+          <Button variant="outline" className="self-start" onClick={() => navigate(-1)}>
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back
           </Button>

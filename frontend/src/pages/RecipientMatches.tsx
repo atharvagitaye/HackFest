@@ -128,8 +128,8 @@ const RecipientMatches = () => {
       <main className="container py-8">
         {/* Header */}
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
-            <Handshake className="w-8 h-8 text-primary" />
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground flex items-center gap-2">
+            <Handshake className="w-6 h-6 sm:w-8 sm:h-8 text-primary shrink-0" />
             My Matched Donations
           </h1>
           <p className="text-muted-foreground text-sm mt-1">
@@ -138,14 +138,14 @@ const RecipientMatches = () => {
         </div>
 
         {/* Summary cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
           {[
             { label: "Awaiting Response", count: pendingCount, icon: AlertCircle, color: "text-amber-500" },
             { label: "Ready for Pickup",  count: acceptedCount, icon: Package, color: "text-primary" },
             { label: "In Transit",        count: inTransitCount, icon: Truck, color: "text-blue-500" },
             { label: "Total Matched",     count: allMatches.length, icon: Star, color: "text-green-500" },
           ].map(({ label, count, icon: Icon, color }) => (
-            <div key={label} className="card-elevated p-5 flex items-center gap-4">
+            <div key={label} className="card-elevated p-3 sm:p-5 flex items-center gap-3">
               <div className={`w-10 h-10 rounded-full bg-muted flex items-center justify-center`}>
                 <Icon className={`w-5 h-5 ${color}`} />
               </div>
@@ -158,12 +158,12 @@ const RecipientMatches = () => {
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-1 border-b border-border mb-6">
+        <div className="flex gap-1 border-b border-border mb-6 overflow-x-auto scroll-smooth pb-px">
           {TABS.map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors flex items-center gap-1.5 ${
+              className={`px-3 py-2 text-sm font-medium border-b-2 transition-colors flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
                 tab === activeTab
                   ? "border-primary text-primary"
                   : "border-transparent text-muted-foreground hover:text-foreground"

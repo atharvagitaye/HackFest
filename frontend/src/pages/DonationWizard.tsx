@@ -86,9 +86,9 @@ const DonationWizard = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
       <main className="container py-8">
-        <div className="grid lg:grid-cols-[280px_1fr] gap-8">
+        <div className="grid lg:grid-cols-[280px_1fr] gap-6">
           {/* Sidebar */}
-          <div className="space-y-4">
+          <div className="space-y-4 lg:block">
             <div className="card-elevated p-5">
               <h3 className="font-semibold text-foreground mb-4">Donation Wizard</h3>
               <div className="space-y-4">
