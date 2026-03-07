@@ -266,7 +266,7 @@ async function main() {
         const statusRoll = Math.random();
         if (statusRoll < 0.75) finalStatus = 'DELIVERED';
         else if (statusRoll < 0.85) finalStatus = 'CANCELLED';
-        else finalStatus = 'REPORTED'; // Expired/wasted - stays as REPORTED with past expiryTime
+        else finalStatus = 'EXPIRED'; // Expired/wasted - marked EXPIRED as cron job would have done
       }
 
       const donation = await prisma.donation.create({
@@ -392,8 +392,10 @@ async function main() {
       } else if (finalStatus === 'CANCELLED') {
         const cancelTime = new Date(preparedTime.getTime() + randInt(60, 300) * 60000);
         await logStatus(donation.id, 'REPORTED', 'CANCELLED', donor.id, cancelTime);
+      } else if (finalStatus === 'EXPIRED') {
+        // Simulate cron job expiry: log REPORTED → EXPIRED transition at expiryTime
+        await logStatus(donation.id, 'REPORTED', 'EXPIRED', admin.id, expiryTime);
       }
-      // else: REPORTED with past expiryTime = wasted donation (caught by waste report query)
     }
   }
 

@@ -196,11 +196,13 @@ const getWasteReport = async (req, res, next) => {
   try {
     const now = new Date();
     
-    // Get expired donations
+    // Get expired donations (includes EXPIRED status set by cron job)
     const expired = await prisma.donation.findMany({
       where: {
-        expiryTime: { lt: now },
-        status: { in: ['REPORTED', 'MATCHED', 'ACCEPTED'] }, // Not picked up/completed
+        OR: [
+          { status: 'EXPIRED' },
+          { expiryTime: { lt: now }, status: { in: ['REPORTED', 'MATCHED', 'ACCEPTED'] } },
+        ],
       },
       include: {
         organization: { select: { name: true, type: true } },
