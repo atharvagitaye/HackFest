@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Truck, MapPin, ArrowDown, ArrowUp, Navigation, Search, Package, Clock, Star } from "lucide-react";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { donationsApi } from "@/lib/api";
+import { donationsApi } from "@/lib/offlineApi";
 import { Donation } from "@/types/api";
 
 function countdownLabel(deadline?: string): string | null {

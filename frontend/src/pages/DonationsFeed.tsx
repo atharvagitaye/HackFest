@@ -6,7 +6,7 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import StatusBadge from "@/components/shared/StatusBadge";
 import QRScanner from "@/components/qr/QRScanner";
-import { donationsApi, matchesApi, deliveriesApi } from "@/lib/api";
+import { donationsApi, matchesApi, deliveriesApi } from "@/lib/offlineApi";
 import { Donation, Match, Delivery } from "@/types/api";
 import { Button } from "@/components/ui/button";
 import { Plus, Package, MapPin, X, Check, Truck, ClipboardList, Search, Star, Clock, Scan, Download } from "lucide-react";

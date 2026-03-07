@@ -34,7 +34,7 @@ const Footer = () => (
         ))}
       </div>
       <div className="mt-10 pt-6 border-t border-border flex flex-col md:flex-row justify-between items-center gap-4">
-        <p className="text-xs text-muted-foreground">© 2024 SurplusSync Technologies Inc. All rights reserved.</p>
+        <p className="text-xs text-muted-foreground">© 2026 SurplusSync Technologies Inc. All rights reserved.</p>
         <p className="text-xs text-primary font-medium">● Certified B Corp</p>
       </div>
     </div>

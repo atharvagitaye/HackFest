@@ -4,6 +4,7 @@ import { ArrowRight, Leaf, CheckCircle, Utensils, Truck, Users, Package, Menu } 
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import Footer from "@/components/layout/Footer";
+import { InstallAppButton } from "@/components/InstallAppButton";
 import heroImage from "@/assets/hero-food-donation.jpg";
 import communityVolunteers from "@/assets/community-volunteers.jpg";
 import communityKitchen from "@/assets/community-kitchen.jpg";
@@ -85,7 +86,7 @@ const Landing = () => {
             <p className="text-base sm:text-lg text-muted-foreground mb-8 max-w-lg leading-relaxed">
               Our AI-powered platform connects surplus food from businesses to those who need it most, reducing waste and fighting hunger in real-time.
             </p>
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-8">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-6">
               <Button size="lg" asChild className="w-full sm:w-auto">
                 <Link to="/dashboard">Become a Donor</Link>
               </Button>
@@ -93,6 +94,17 @@ const Landing = () => {
                 <Link to="/donations">Find Food Near You</Link>
               </Button>
             </div>
+            
+            {/* Install App Button - Only visible when installable */}
+            <div className="mb-8">
+              <InstallAppButton 
+                variant="secondary" 
+                size="lg" 
+                showIcon={true}
+                className="w-full sm:w-auto"
+              />
+            </div>
+
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <div className="flex -space-x-2">
                 {[1, 2, 3].map(i => (
@@ -209,7 +221,7 @@ const Landing = () => {
               <Button size="lg" asChild className="w-full sm:w-auto">
                 <Link to="/dashboard">Get Started for Free</Link>
               </Button>
-              <Button variant="outline" size="lg" className="border-background/20 text-background hover:bg-background/10 w-full sm:w-auto" asChild>
+              <Button variant="outline" size="lg" className="bg-background/10 border-background/30 text-background hover:bg-background/20 hover:border-background/40 w-full sm:w-auto" asChild>
                 <Link to="/impact">Talk to an Expert</Link>
               </Button>
             </div>

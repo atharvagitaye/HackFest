@@ -7,7 +7,7 @@ import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { Sparkles, MapPin, RefreshCw, Star, Package, Mail, Phone, Building2 } from "lucide-react";
 import communityKitchen from "@/assets/community-kitchen.jpg";
-import { donationsApi, matchesApi } from "@/lib/api";
+import { donationsApi, matchesApi } from "@/lib/offlineApi";
 import { useAuth } from "@/contexts/AuthContext";
 import { Match } from "@/types/api";
 

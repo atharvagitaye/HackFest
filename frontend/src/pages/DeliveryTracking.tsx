@@ -9,7 +9,7 @@ import RatingModal from "@/components/shared/RatingModal";
 import QRCodeDisplay from "@/components/qr/QRCodeDisplay";
 import { ReportDisputeButton } from "@/components/ReportDisputeButton";
 import { Button } from "@/components/ui/button";
-import { deliveriesApi } from "@/lib/api";
+import { deliveriesApi } from "@/lib/offlineApi";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   Headphones, Share2, Star, Truck, Package, Sparkles,

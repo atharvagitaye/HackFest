@@ -6,7 +6,7 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { Camera, Sparkles, ArrowRight, ArrowLeft, Lock, CheckCircle } from "lucide-react";
-import { donationsApi } from "@/lib/api";
+import { donationsApi } from "@/lib/offlineApi";
 import { useAuth } from "@/contexts/AuthContext";
 
 const categories = ["Bakery", "Prepared Meals", "Produce", "Dairy", "Protein"];

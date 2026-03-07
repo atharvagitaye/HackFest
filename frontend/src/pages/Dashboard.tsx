@@ -4,13 +4,15 @@ import StatCard from "@/components/shared/StatCard";
 import MapWidget from "@/components/shared/MapWidget";
 import QRScanner from "@/components/qr/QRScanner";
 import { Button } from "@/components/ui/button";
+import { InstallAppButton } from "@/components/InstallAppButton";
 import {
   Plus, Truck, Package, Handshake, Leaf, Clock,
   CheckCircle, AlertCircle, Sparkles, ArrowRight, Scan,
 } from "lucide-react";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { impactApi, donationsApi, matchesApi, deliveriesApi } from "@/lib/api";
+import { impactApi } from "@/lib/api";
+import { donationsApi, matchesApi, deliveriesApi } from "@/lib/offlineApi";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -43,7 +45,10 @@ const DonorDashboard = ({ impact, liveMarkers }: { impact: any; liveMarkers: any
           <h1 className="text-2xl font-bold text-foreground">Donor Dashboard</h1>
           <p className="text-muted-foreground text-sm mt-0.5">Manage your surplus food donations and track their redistribution.</p>
         </div>
-        <Button onClick={() => navigate("/donate")}><Plus className="w-4 h-4 mr-2" />New Donation</Button>
+        <div className="flex items-center gap-2">
+          <InstallAppButton variant="outline" size="default" />
+          <Button onClick={() => navigate("/donate")}><Plus className="w-4 h-4 mr-2" />New Donation</Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">

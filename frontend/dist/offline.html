@@ -34,10 +34,21 @@
       height: 40px;
       fill: white;
     }
+    .icon.checking {
+      background: #3b82f6;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
     h1 {
       color: #166534;
       font-size: 24px;
       margin-bottom: 12px;
+    }
+    h1.checking {
+      color: #1e40af;
     }
     p {
       color: #4b5563;
@@ -58,18 +69,99 @@
     button:hover {
       background: #15803d;
     }
+    button:disabled {
+      background: #9ca3af;
+      cursor: not-allowed;
+    }
+    .status {
+      font-size: 14px;
+      color: #6b7280;
+      margin-top: 16px;
+    }
   </style>
 </head>
 <body>
   <div class="container">
-    <div class="icon">
+    <div class="icon" id="icon">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
         <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
       </svg>
     </div>
-    <h1>You're Offline</h1>
-    <p>SurplusSync needs an internet connection to load fresh data. Please check your connection and try again.</p>
-    <button onclick="location.reload()">Try Again</button>
+    <h1 id="title">You're Offline</h1>
+    <p id="message">SurplusSync needs an internet connection to load fresh data. Please check your connection and try again.</p>
+    <button id="retryBtn" onclick="tryReconnect()">Try Again</button>
+    <div class="status" id="status"></div>
   </div>
+
+  <script>
+    // Event-driven reconnection (no polling loops)
+    
+    // Auto-detect when connection is restored
+    window.addEventListener('online', function() {
+      handleOnline();
+    });
+
+    // Check if already online when page loads
+    if (navigator.onLine) {
+      checkConnection();
+    }
+
+    function handleOnline() {
+      document.getElementById('icon').classList.add('checking');
+      document.getElementById('title').textContent = 'Connection Restored!';
+      document.getElementById('title').classList.add('checking');
+      document.getElementById('message').textContent = 'Reloading the app...';
+      document.getElementById('status').textContent = 'Reconnecting...';
+      
+      // Reload to main app
+      setTimeout(function() {
+        window.location.replace('/');
+      }, 500);
+    }
+
+    function tryReconnect() {
+      var btn = document.getElementById('retryBtn');
+      btn.disabled = true;
+      btn.textContent = 'Checking...';
+      document.getElementById('status').textContent = 'Checking connection...';
+      
+      checkConnection();
+    }
+
+    function checkConnection() {
+      // Check connection using health endpoint with no-cors to avoid CORS issues
+      fetch('/health', { 
+        method: 'GET',
+        cache: 'no-cache',
+        signal: AbortSignal.timeout(5000)
+      })
+      .then(function(response) {
+        if (response.ok) {
+          // Connection successful - reload to main app
+          handleOnline();
+        } else {
+          showStillOffline();
+        }
+      })
+      .catch(function(error) {
+        // Still offline
+        showStillOffline();
+      });
+    }
+
+    function showStillOffline() {
+      var btn = document.getElementById('retryBtn');
+      btn.disabled = false;
+      btn.textContent = 'Try Again';
+      document.getElementById('status').textContent = 'Still offline. Please check your connection.';
+      
+      // Clear status after a few seconds
+      setTimeout(function() {
+        document.getElementById('status').textContent = '';
+      }, 3000);
+    }
+    
+    // NO POLLING - Event-driven only!
+  </script>
 </body>
 </html>

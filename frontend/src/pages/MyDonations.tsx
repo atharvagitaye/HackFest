@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
-import { donationsApi } from "@/lib/api";
+import { donationsApi } from "@/lib/offlineApi";
 import { Donation } from "@/types/api";
 import { useAuth } from "@/contexts/AuthContext";
 import {

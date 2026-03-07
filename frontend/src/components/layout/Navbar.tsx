@@ -14,6 +14,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 import { matchesApi } from "@/lib/api";
 import { Match } from "@/types/api";
+import { SyncQueueIndicator } from "@/components/SyncQueueIndicator";
+import { InstallAppButtonCompact, InstallAppButtonIcon } from "@/components/InstallAppButton";
 
 const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -57,7 +59,7 @@ const Navbar = () => {
   };
 
   return (
-    <header className="sticky top-0 z-50 bg-card/80 backdrop-blur-md border-b border-border">
+    <header className="sticky top-0 z-40 bg-card/80 backdrop-blur-md border-b border-border">
       <div className="container flex items-center justify-between h-16">
         <div className="flex items-center gap-2">
           <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
@@ -121,6 +123,16 @@ const Navbar = () => {
               className="bg-transparent text-sm outline-none w-40 text-foreground placeholder:text-muted-foreground"
             />
           </div>
+          
+          {/* Sync Queue Indicator */}
+          <SyncQueueIndicator />
+          
+          {/* Install App Button - Desktop */}
+          <InstallAppButtonCompact />
+          
+          {/* Install App Button - Mobile */}
+          <InstallAppButtonIcon />
+          
           {/* Notification Bell */}
           <Button
             variant="ghost"

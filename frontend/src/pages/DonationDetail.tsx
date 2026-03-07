@@ -5,7 +5,7 @@ import Footer from '@/components/layout/Footer';
 import MapWidget from '@/components/shared/MapWidget';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { donationsApi } from '@/lib/api';
+import { donationsApi } from '@/lib/offlineApi';
 import { ArrowLeft, Package, MapPin, Calendar, Clock, Building2, User, Scale, Utensils, AlertCircle } from 'lucide-react';
 
 const STATUS_COLORS: Record<string, string> = {

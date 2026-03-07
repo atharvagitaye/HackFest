@@ -6,7 +6,7 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import QRScanner from "@/components/qr/QRScanner";
 import { Button } from "@/components/ui/button";
-import { matchesApi, deliveriesApi } from "@/lib/api";
+import { matchesApi, deliveriesApi } from "@/lib/offlineApi";
 import { Match, Delivery } from "@/types/api";
 import {
   Handshake, Check, X, Truck, Package, MapPin,
