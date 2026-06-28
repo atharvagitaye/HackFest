@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
@@ -197,6 +197,43 @@ const DonationsFeed = () => {
     return result;
   }, [donations, activeCategory, searchText, statusFilter]);
 
+  const exportFilteredCSV = useCallback(() => {
+    try {
+      const headers = ["ID", "Food Category", "Quantity (kg)", "Status", "Donor", "Organisation", "Address", "Expiry Time", "Pickup Deadline", "Created At"];
+      const rows = filtered.map((d) => [
+        d.id,
+        d.foodCategory ?? "",
+        d.quantityKg ?? "",
+        d.status,
+        d.donor?.name ?? "",
+        d.organization?.name ?? "",
+        d.organization?.address ?? "",
+        d.expiryTime ?? "",
+        d.pickupDeadline ?? "",
+        d.createdAt ?? "",
+      ]);
+      const escape = (v: unknown) => {
+        const s = String(v ?? "");
+        return s.includes(",") || s.includes('"') || s.includes("\n")
+          ? `"${s.replace(/"/g, '""')}"`
+          : s;
+      };
+      const csv = [headers, ...rows].map((row) => row.map(escape).join(",")).join("\n");
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `donations_filtered_${Date.now()}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      toast.success(`CSV exported (${filtered.length} donation${filtered.length !== 1 ? "s" : ""})`);
+    } catch {
+      toast.error("CSV export failed");
+    }
+  }, [filtered]);
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -340,7 +377,7 @@ const DonationsFeed = () => {
               {user?.role === "DONOR" && (
                 <>
                   <Button variant="outline" onClick={() => {
-                    donationsApi.exportCSV().then(() => toast.success('CSV exported successfully')).catch((err) => toast.error(err.message || 'Export failed'));
+                    exportFilteredCSV();
                   }}>
                     <Download className="w-4 h-4 mr-2" />Export CSV
                   </Button>
