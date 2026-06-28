@@ -39,6 +39,7 @@ model User {
   ratingsGiven    Rating[]               @relation("RatingsGiven")
   ratingsReceived Rating[]               @relation("RatingsReceived")
   trustMetrics    TrustMetric?
+  notifications   Notification[]
 
   @@index([email])
   @@index([role])
@@ -211,6 +212,25 @@ model DailyImpact {
   co2Reduced  Float?   @map("co2_reduced")
 
   @@map("daily_impact")
+}
+
+model Notification {
+  id          String   @id @default(uuid())
+  userId      String   @map("user_id")
+  type        String   @db.VarChar(50) // DONATION_MATCHED | DONATION_ACCEPTED | PICKUP_STARTED | QR_VERIFIED | DELIVERY_COMPLETED | DONATION_CANCELLED | SYSTEM_UPDATE
+  title       String   @db.VarChar(200)
+  description String
+  read        Boolean  @default(false)
+  href        String?  @db.VarChar(500)
+  meta        Json?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, read])
+  @@index([createdAt])
+  @@map("notifications")
 }
 
 model Dispute {
