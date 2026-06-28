@@ -4,10 +4,17 @@ const { sendSuccess } = require('../utils/response');
 
 const start = async (req, res, next) => {
   try {
-    // Disable direct pickup - must use QR code scanning
-    return next(require('../utils/AppError').badRequest(
-      'Direct pickup is disabled. Please scan the donor\'s QR code to confirm pickup.'
-    ));
+    const { donationId } = req.body;
+    const recipientId = req.user.id;
+
+    // If a delivery was already created by acceptMatch, return it instead of creating a duplicate
+    const existing = await deliveryRepo.findByDonation(donationId);
+    if (existing && existing.recipientId === recipientId) {
+      return sendSuccess(res, existing, 'Delivery already started', 200);
+    }
+
+    const delivery = await deliveryService.startDelivery({ donationId, recipientId });
+    sendSuccess(res, delivery, 'Delivery started', 201);
   } catch (err) {
     next(err);
   }

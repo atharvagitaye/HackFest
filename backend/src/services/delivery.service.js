@@ -2,6 +2,7 @@ const deliveryRepo = require('../repositories/delivery.repository');
 const donationRepo = require('../repositories/donation.repository');
 const trustService = require('./trust.service');
 const AppError = require('../utils/AppError');
+const notifService = require('./notification.service');
 
 const startDelivery = async ({ donationId, recipientId }) => {
   const donation = await donationRepo.findById(donationId);
@@ -25,6 +26,15 @@ const startDelivery = async ({ donationId, recipientId }) => {
     newStatus: 'PICKED_UP',
     changedBy: recipientId,
   });
+
+  // Notify donor that pickup has started
+  notifService.push(
+    donation.donorId,
+    'PICKUP_STARTED',
+    'Pickup Started',
+    `A recipient has started picking up your donation of ${donation.foodCategory ?? 'food'}.`,
+    { href: '/delivery', meta: { donationId } }
+  );
 
   return delivery;
 };
@@ -64,6 +74,15 @@ const completeDelivery = async (deliveryId, userId) => {
   // Recalculate trust score for recipient
   await trustService.updateTrustMetrics(delivery.recipientId);
 
+  // Notify donor that delivery is complete
+  notifService.push(
+    delivery.donation.donorId,
+    'DELIVERY_COMPLETED',
+    'Delivery Completed',
+    `Your donation of ${delivery.donation.foodCategory ?? 'food'} was successfully delivered. Thank you!`,
+    { href: '/my-donations', meta: { donationId: delivery.donationId } }
+  );
+
   return updated;
 };
 
@@ -79,6 +98,22 @@ const confirmPickupByQR = async (qrToken, userId) => {
     newStatus: 'PICKED_UP',
     changedBy: userId,
   });
+
+  // Notify recipient that QR scan was confirmed; notify donor too
+  notifService.push(
+    userId,
+    'QR_VERIFIED',
+    'Pickup Confirmed via QR',
+    `You successfully scanned the QR code and confirmed pickup of ${delivery.donation?.foodCategory ?? 'the donation'}.`,
+    { href: `/delivery/${delivery.id}`, meta: { deliveryId: delivery.id } }
+  );
+  notifService.push(
+    delivery.donation.donorId,
+    'QR_VERIFIED',
+    'QR Code Scanned',
+    `The recipient scanned your QR code and confirmed pickup of ${delivery.donation?.foodCategory ?? 'your donation'}.`,
+    { href: `/delivery/${delivery.id}`, meta: { deliveryId: delivery.id } }
+  );
 
   return delivery;
 };

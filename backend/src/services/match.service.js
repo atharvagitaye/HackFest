@@ -5,6 +5,7 @@ const mlClient = require('../ml/mlClient');
 const AppError = require('../utils/AppError');
 const config = require('../config/env');
 const prisma = require('../config/prisma');
+const notifService = require('./notification.service');
 
 /**
  * Calculate historical success rate for a recipient.
@@ -138,7 +139,20 @@ const generateMatches = async (donationId) => {
 
   await saveMatches(donationId, predictions);
 
-  return matchRepo.findByDonation(donationId);
+  // Notify each matched recipient
+  const matchResults = await matchRepo.findByDonation(donationId);
+  const food = donation.foodCategory ?? 'a donation';
+  for (const m of matchResults) {
+    notifService.push(
+      m.recipientId,
+      'DONATION_MATCHED',
+      'New Donation Matched',
+      `A donation of ${donation.quantityKg ?? '?'} kg ${food} has been matched to your organisation.`,
+      { href: '/my-matches', meta: { donationId } }
+    );
+  }
+
+  return matchResults;
 };
 
 const getMatchesForDonation = (donationId) => matchRepo.findByDonation(donationId);
@@ -169,8 +183,17 @@ const acceptMatch = async (matchId, recipientId) => {
   await deliveryRepo.create({
     donationId: match.donationId,
     recipientId: recipientId,
-    status: 'PENDING_PICKUP', // Not yet picked up, waiting for QR scan
+    status: 'PENDING_PICKUP',
   });
+
+  // Notify donor that their donation was accepted
+  notifService.push(
+    match.donation.donorId,
+    'DONATION_ACCEPTED',
+    'Match Accepted',
+    `Your donation of ${match.donation.foodCategory ?? 'food'} has been accepted and is ready for pickup.`,
+    { href: '/my-donations', meta: { donationId: match.donationId } }
+  );
 
   return matchRepo.findById(matchId);
 };

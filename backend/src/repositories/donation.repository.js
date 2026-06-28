@@ -40,7 +40,7 @@ const findNearbyRecipients = async (donation, radiusKm) => {
 
   // Get all RECIPIENT users who have a linked organization with location data
   const recipients = await prisma.user.findMany({
-    where: { role: 'RECIPIENT', organizationId: { not: null }, isVerified: true },
+    where: { role: 'RECIPIENT', organizationId: { not: null } },
     include: {
       organization: true,
     },
