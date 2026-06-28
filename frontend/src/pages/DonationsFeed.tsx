@@ -1,6 +1,6 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -58,9 +58,30 @@ const DonationsFeed = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [activeCategory, setActiveCategory] = useState("All Items");
-  const [searchText, setSearchText] = useState("");
+  const [searchText, setSearchText] = useState(() => searchParams.get("search") ?? "");
   const [statusFilter, setStatusFilter] = useState("Open");
+
+  // Keep local state in sync when the URL ?search param changes externally
+  // (e.g. navigating here from the navbar search)
+  useEffect(() => {
+    const urlSearch = searchParams.get("search") ?? "";
+    setSearchText(urlSearch);
+  }, [searchParams]);
+
+  const updateSearch = (value: string) => {
+    setSearchText(value);
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (value.trim()) {
+        next.set("search", value);
+      } else {
+        next.delete("search");
+      }
+      return next;
+    }, { replace: true });
+  };
   const [showQRScanner, setShowQRScanner] = useState(false);
 
   const { data: donationsData, isLoading } = useQuery({
@@ -337,12 +358,12 @@ const DonationsFeed = () => {
               <Search className="w-4 h-4 text-muted-foreground mr-2 shrink-0" />
               <input
                 value={searchText}
-                onChange={(e) => setSearchText(e.target.value)}
+                onChange={(e) => updateSearch(e.target.value)}
                 placeholder="Search food, org..."
                 className="bg-transparent text-sm outline-none flex-1 text-foreground placeholder:text-muted-foreground"
               />
               {searchText && (
-                <button onClick={() => setSearchText("")} className="ml-1 text-muted-foreground hover:text-foreground">
+                <button onClick={() => updateSearch("")} className="ml-1 text-muted-foreground hover:text-foreground">
                   <X className="w-3 h-3" />
                 </button>
               )}
