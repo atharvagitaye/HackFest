@@ -98,6 +98,26 @@ router.post('/login', authLimiter, validate(loginSchema), authController.login);
  */
 router.get('/me', requireAuth, authController.me);
 
+const updateProfileSchema = z.object({
+  name: z.string().min(2).max(100).optional(),
+  phone: z.string().max(20).optional().nullable(),
+  address: z.string().max(300).optional().nullable(),
+  maxCapacityKg: z.preprocess(
+    (v) => (v === '' || v === null || v === undefined ? undefined : Number(v)),
+    z.number().positive().optional()
+  ),
+  latitude: z.preprocess(
+    (v) => (v === '' || v === null || v === undefined ? undefined : Number(v)),
+    z.number().optional()
+  ),
+  longitude: z.preprocess(
+    (v) => (v === '' || v === null || v === undefined ? undefined : Number(v)),
+    z.number().optional()
+  ),
+});
+
+router.patch('/profile', requireAuth, validate(updateProfileSchema), authController.updateProfile);
+
 /**
  * @swagger
  * /auth/trust:

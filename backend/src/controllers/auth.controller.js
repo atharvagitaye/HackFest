@@ -47,4 +47,44 @@ const trust = async (req, res, next) => {
   }
 };
 
-module.exports = { register, login, me, trust };
+const updateProfile = async (req, res, next) => {
+  try {
+    const { name, phone, address, maxCapacityKg, latitude, longitude } = req.body;
+    const userId = req.user.id;
+
+    // Update user fields
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: {
+        ...(name !== undefined ? { name } : {}),
+        ...(phone !== undefined ? { phone } : {}),
+      },
+      include: { organization: true },
+    });
+
+    // Update linked organization if user has one
+    if (updatedUser.organizationId) {
+      await prisma.organization.update({
+        where: { id: updatedUser.organizationId },
+        data: {
+          ...(address !== undefined ? { address } : {}),
+          ...(maxCapacityKg !== undefined ? { maxCapacityKg: parseFloat(maxCapacityKg) } : {}),
+          ...(latitude !== undefined ? { latitude: parseFloat(latitude) } : {}),
+          ...(longitude !== undefined ? { longitude: parseFloat(longitude) } : {}),
+        },
+      });
+    }
+
+    // Return fresh user with updated org
+    const fresh = await prisma.user.findUnique({
+      where: { id: userId },
+      include: { organization: true },
+    });
+    const { passwordHash, ...safeUser } = fresh;
+    sendSuccess(res, safeUser, 'Profile updated successfully');
+  } catch (err) {
+    next(err);
+  }
+};
+
+module.exports = { register, login, me, trust, updateProfile };
