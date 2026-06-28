@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { Bell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import NotificationBadge from './NotificationBadge';
@@ -9,6 +9,12 @@ const NotificationBell = () => {
   const [open, setOpen] = useState(false);
   const bellRef = useRef<HTMLButtonElement>(null);
   const { notifications, unreadCount, isLoading, markRead, markAllRead } = useNotifications();
+
+  useEffect(() => {
+    const handler = () => setOpen(true);
+    window.addEventListener("surplussync:open-notifications", handler);
+    return () => window.removeEventListener("surplussync:open-notifications", handler);
+  }, []);
 
   return (
     <div className="relative">

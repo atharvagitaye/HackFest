@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Search, Settings, Leaf, LogOut, Menu } from "lucide-react";
+import { Settings, Leaf, LogOut, Menu } from "lucide-react";
+import GlobalNavigationSearch from "@/components/search/GlobalNavigationSearch";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -103,13 +104,7 @@ const Navbar = () => {
         </nav>
 
         <div className="flex items-center gap-2">
-          <div className="hidden md:flex items-center bg-muted rounded-lg px-3 py-1.5">
-            <Search className="w-4 h-4 text-muted-foreground mr-2" />
-            <input
-              placeholder="Search..."
-              className="bg-transparent text-sm outline-none w-40 text-foreground placeholder:text-muted-foreground"
-            />
-          </div>
+          <GlobalNavigationSearch />
           
           {/* Sync Queue Indicator */}
           <SyncQueueIndicator />
