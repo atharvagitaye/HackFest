@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import MapWidget from "@/components/shared/MapWidget";
@@ -17,6 +18,7 @@ const STATIC_ACHIEVEMENTS = [
 ];
 
 const OrganizationProfile = () => {
+  const navigate = useNavigate();
   const { data: user } = useQuery({
     queryKey: ["auth-me"],
     queryFn: authApi.me,
@@ -59,7 +61,7 @@ const OrganizationProfile = () => {
             </div>
             <div className="flex gap-3">
               <Button variant="outline">Share Profile</Button>
-              <Button>Edit Profile</Button>
+              <Button onClick={() => navigate("/organization/edit")}>Edit Profile</Button>
             </div>
           </div>
         </div>

@@ -26,6 +26,7 @@ import RecipientMatches from "./pages/RecipientMatches";
 import MyDonations from "./pages/MyDonations";
 import Leaderboard from "./pages/Leaderboard";
 import DonationDetail from "./pages/DonationDetail";
+import EditProfile from "./pages/EditProfile";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -93,6 +94,7 @@ const App = () => {
             <Route path="/delivery/:id" element={<ProtectedRoute><DeliveryTracking /></ProtectedRoute>} />
             <Route path="/impact" element={<ProtectedRoute><ImpactAnalytics /></ProtectedRoute>} />
             <Route path="/organization" element={<ProtectedRoute><OrganizationProfile /></ProtectedRoute>} />
+            <Route path="/organization/edit" element={<ProtectedRoute><EditProfile /></ProtectedRoute>} />
             <Route path="/donate" element={<ProtectedRoute><DonationWizard /></ProtectedRoute>} />
             <Route path="/review" element={<ProtectedRoute><DonationReview /></ProtectedRoute>} />
             <Route path="/my-donations" element={<ProtectedRoute><MyDonations /></ProtectedRoute>} />

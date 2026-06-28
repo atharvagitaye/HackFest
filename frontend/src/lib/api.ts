@@ -58,6 +58,15 @@ export const authApi = {
   me: () => req<User>('GET', '/auth/me'),
 
   trust: () => req<TrustMetric>('GET', '/auth/trust'),
+
+  updateProfile: (payload: {
+    name?: string;
+    phone?: string;
+    address?: string;
+    maxCapacityKg?: number;
+    latitude?: number;
+    longitude?: number;
+  }) => req<User>('PATCH', '/auth/profile', payload),
 };
 
 // ─── Donations ────────────────────────────────────────────────────────────────
