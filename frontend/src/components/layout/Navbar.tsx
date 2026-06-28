@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Bell, Search, Settings, Leaf, LogOut, Package, Menu } from "lucide-react";
+import { Search, Settings, Leaf, LogOut, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -11,28 +11,15 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useAuth } from "@/contexts/AuthContext";
-import { useQuery } from "@tanstack/react-query";
-import { matchesApi } from "@/lib/api";
-import { Match } from "@/types/api";
 import { SyncQueueIndicator } from "@/components/SyncQueueIndicator";
 import { InstallAppButtonCompact, InstallAppButtonIcon } from "@/components/InstallAppButton";
+import NotificationBell from "@/components/notifications/NotificationBell";
 
 const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
-
-  // Notification count: unactioned matches for RECIPIENT
-  const { data: myMatches = [] } = useQuery<Match[]>({
-    queryKey: ["my-matches"],
-    queryFn: matchesApi.getMyMatches,
-    enabled: user?.role === "RECIPIENT",
-    refetchInterval: 30_000,
-  });
-  const notifCount = user?.role === "RECIPIENT"
-    ? myMatches.filter((m) => m.donation?.status === "MATCHED" && !m.selected).length
-    : 0;
 
   const navItems = [
     { label: "Dashboard", path: user?.role === "ADMIN" ? "/admin" : "/dashboard" },
@@ -134,19 +121,7 @@ const Navbar = () => {
           <InstallAppButtonIcon />
           
           {/* Notification Bell */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="relative text-muted-foreground"
-            onClick={() => user?.role === "RECIPIENT" ? navigate("/my-matches") : undefined}
-          >
-            <Bell className="w-5 h-5" />
-            {notifCount > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full flex items-center justify-center">
-                {notifCount > 9 ? "9+" : notifCount}
-              </span>
-            )}
-          </Button>
+          <NotificationBell />
           {/* Profile link */}
           <Button
             variant="ghost"

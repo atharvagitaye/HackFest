@@ -211,6 +211,28 @@ export const adminApi = {
   getWasteReport: () => req<any>('GET', '/admin/waste-report'),
 };
 
+// ─── Notifications ────────────────────────────────────────────────────────────
+export const notificationsApi = {
+  list: (opts?: { unread?: boolean; limit?: number }) => {
+    const qs = opts
+      ? '?' + new URLSearchParams({
+          ...(opts.unread ? { unread: 'true' } : {}),
+          ...(opts.limit ? { limit: String(opts.limit) } : {}),
+        }).toString()
+      : '';
+    return req<{ id: string; userId: string; type: string; title: string; description: string; read: boolean; href?: string; meta?: Record<string, string>; createdAt: string }[]>('GET', `/notifications${qs}`);
+  },
+
+  unreadCount: () =>
+    req<{ count: number }>('GET', '/notifications/unread-count'),
+
+  markRead: (id: string) =>
+    req<null>('PATCH', `/notifications/${id}/read`),
+
+  markAllRead: () =>
+    req<null>('PATCH', '/notifications/read-all'),
+};
+
 // ─── Impact ───────────────────────────────────────────────────────────────────
 export const impactApi = {
   summary: () => req<ImpactSummary>('GET', '/impact/summary'),

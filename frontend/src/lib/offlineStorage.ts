@@ -17,13 +17,13 @@ interface OfflineDB extends DBSchema {
       id: string; // Temporary client-side ID
       donationData: CreateDonationPayload;
       createdAt: number; // Timestamp
-      synced: boolean;
+      synced: 0 | 1; // IDB cannot index booleans; use 0=false, 1=true
       syncedAt?: number;
       serverId?: string; // ID assigned by server after sync
       error?: string; // Sync error if any
     };
-    indexes: { 
-      'by-synced': boolean;
+    indexes: {
+      'by-synced': 0 | 1;
       'by-created': number;
     };
   };
@@ -76,7 +76,7 @@ interface OfflineDB extends DBSchema {
 
 // ─── Database Constants ───────────────────────────────────────────────────────
 const DB_NAME = 'FoodWasteDB';
-const DB_VERSION = 1;
+const DB_VERSION = 2; // bumped: synced field changed from boolean to 0|1
 const EXPIRY_TIME = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
 
 // ─── Database Instance ────────────────────────────────────────────────────────
@@ -149,7 +149,7 @@ export async function addOfflineDonation(
     id,
     donationData,
     createdAt: Date.now(),
-    synced: false,
+    synced: 0,
   });
   
   console.log('✅ Donation added to offline queue:', id);
@@ -163,7 +163,7 @@ export async function getUnsyncedDonations() {
   const db = await getDB();
   const tx = db.transaction('offlineDonations', 'readonly');
   const index = tx.store.index('by-synced');
-  return await index.getAll(false);
+  return await index.getAll(0);
 }
 
 /**
@@ -173,7 +173,7 @@ export async function getUnsyncedDonationsCount(): Promise<number> {
   const db = await getDB();
   const tx = db.transaction('offlineDonations', 'readonly');
   const index = tx.store.index('by-synced');
-  return await index.count(false);
+  return await index.count(0);
 }
 
 /**
@@ -195,7 +195,7 @@ export async function markDonationSynced(
   const donation = await db.get('offlineDonations', offlineId);
   
   if (donation) {
-    donation.synced = true;
+    donation.synced = 1;
     donation.syncedAt = Date.now();
     donation.serverId = serverId;
     await db.put('offlineDonations', donation);
@@ -233,7 +233,7 @@ export async function cleanExpiredDonations(): Promise<number> {
   
   for (const donation of allDonations) {
     // Remove if: unsynced AND older than 24 hours
-    if (!donation.synced && donation.createdAt < cutoff) {
+    if (!donation.synced && donation.createdAt < cutoff) { // 0 is falsy
       await db.delete('offlineDonations', donation.id);
       removed++;
       console.log('🧹 Removed expired donation:', donation.id);
@@ -241,7 +241,7 @@ export async function cleanExpiredDonations(): Promise<number> {
     
     // Also remove synced donations older than 7 days (cleanup)
     const sevenDaysAgo = now - (7 * 24 * 60 * 60 * 1000);
-    if (donation.synced && donation.createdAt < sevenDaysAgo) {
+    if (donation.synced === 1 && donation.createdAt < sevenDaysAgo) {
       await db.delete('offlineDonations', donation.id);
       removed++;
     }
@@ -435,7 +435,7 @@ export async function getStorageStats() {
   const cachedMatches = await db.getAll('cachedMatches');
   const cachedDeliveries = await db.getAll('cachedDeliveries');
   
-  const unsynced = offlineDonations.filter(d => !d.synced).length;
+  const unsynced = offlineDonations.filter(d => d.synced === 0).length;
   
   return {
     offlineDonations: {

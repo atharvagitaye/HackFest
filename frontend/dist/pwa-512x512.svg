@@ -1,0 +1,26 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="512" height="512" fill="#16a34a" rx="85"/>
+  
+  <!-- Leaf icon (larger) -->
+  <g transform="translate(256, 256)">
+    <!-- Main leaf -->
+    <path d="M -110 -55 Q -110 -135, 0 -160 Q 110 -135, 110 -55 Q 110 25, 55 80 Q 0 105, -55 80 Q -110 25, -110 -55" 
+          fill="#ffffff" stroke="#ffffff" stroke-width="5"/>
+    
+    <!-- Leaf vein -->
+    <line x1="0" y1="-160" x2="0" y2="80" stroke="#16a34a" stroke-width="8"/>
+    
+    <!-- Small veins -->
+    <line x1="0" y1="-110" x2="-68" y2="-55" stroke="#16a34a" stroke-width="5"/>
+    <line x1="0" y1="-110" x2="68" y2="-55" stroke="#16a34a" stroke-width="5"/>
+    <line x1="0" y1="-30" x2="-55" y2="10" stroke="#16a34a" stroke-width="5"/>
+    <line x1="0" y1="-30" x2="55" y2="10" stroke="#16a34a" stroke-width="5"/>
+    <line x1="0" y1="20" x2="-40" y2="50" stroke="#16a34a" stroke-width="4"/>
+    <line x1="0" y1="20" x2="40" y2="50" stroke="#16a34a" stroke-width="4"/>
+  </g>
+  
+  <!-- App name -->
+  <text x="256" y="440" font-family="Arial, sans-serif" font-size="48" font-weight="bold" 
+        fill="#ffffff" text-anchor="middle">SurplusSync</text>
+</svg>
